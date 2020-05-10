@@ -1,8 +1,8 @@
 ![karai_github_banner](https://user-images.githubusercontent.com/34389545/80034381-f6a14d00-84b3-11ea-857a-638322dac890.png)
 
-[![Discord](https://img.shields.io/discord/388915017187328002?label=Join%20Discord)](http://chat.turtlecoin.lol) [![GitHub issues](https://img.shields.io/github/issues/turtlecoin/go-karai?label=Issues)](https://github.com/turtlecoin/go-karai/issues) ![GitHub stars](https://img.shields.io/github/stars/turtlecoin/go-karai?label=Github%20Stars) ![Build](https://github.com/turtlecoin/go-karai/workflows/Build/badge.svg) ![GitHub](https://img.shields.io/github/license/turtlecoin/go-karai) ![GitHub issues by-label](https://img.shields.io/github/issues/turtlecoin/go-karai/Todo)
+[![Discord](https://img.shields.io/discord/388915017187328002?label=Join%20Discord)](http://chat.turtlecoin.lol) [![GitHub issues](https://img.shields.io/github/issues/karai/go-karai?label=Issues)](https://github.com/karai/go-karai/issues) ![GitHub stars](https://img.shields.io/github/stars/karai/go-karai?label=Github%20Stars) ![Build](https://github.com/karai/go-karai/workflows/Build/badge.svg) ![GitHub](https://img.shields.io/github/license/karai/go-karai) ![GitHub issues by-label](https://img.shields.io/github/issues/karai/go-karai/Todo)
 
-**Tech:** [📝 WHITEPAPER.md](https://github.com/turtlecoin/go-karai/blob/master/docs/WHITEPAPER.md) **Browse:** [💻 Karai Pointer Explorer](https://karaiexplorer.extrahash.org/) **Read:** [🔗 Official Karai Blog](https://karai.io)
+**Tech:** [📝 WHITEPAPER.md](https://github.com/karai/go-karai/blob/master/docs/WHITEPAPER.md) **Browse:** [💻 Karai Pointer Explorer](https://karaiexplorer.extrahash.org/) **Read:** [🔗 Official Karai Blog](https://karai.io)
 
 ## Usage
 
