@@ -1,0 +1,30 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.pdf
+*.backup
+*.karai
+go-karai
+graph/*.dat
+graph/*.json
+.vscode/
+./config/p2p/*
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool, specifically when used with LiteIDE
+*.out
+
+# Dependency directories (remove the comment below to include it)
+# vendor/
+
+# Place the notes that are not worth being issues in here
+./notes/*
+./notes
+notes
+notes/
+config/p2p/peer.id
