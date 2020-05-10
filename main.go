@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net"
@@ -49,7 +50,7 @@ const configPeerIDFile = p2pConfigDir + "/peer.id"
 
 // Coordinator values
 var isCoordinator bool = false
-var karaiPort string = "4200"
+var karaiPort string
 var p2pPeerID string
 
 // Version string
@@ -57,7 +58,7 @@ func semverInfo() string {
 	var majorSemver, minorSemver, patchSemver, wholeString string
 	majorSemver = "0"
 	minorSemver = "5"
-	patchSemver = "0"
+	patchSemver = "1"
 	wholeString = majorSemver + "." + minorSemver + "." + patchSemver
 	return wholeString
 }
@@ -89,13 +90,35 @@ type GraphTx struct {
 // 	waveTip          *GraphTx.Hash
 // }
 
+func parseFlags() {
+	flag.StringVar(&karaiPort, "port", "4200", "Port to run Karai Coordinator on.")
+	flag.BoolVar(&isCoordinator, "coordinator", false, "Run as coordinator.")
+	// flag.StringVar(&karaiPort, "karaiPort", "4200", "Port to run Karai")
+	flag.Parse()
+}
+
+func announce() {
+	if isCoordinator {
+		logrus.Info("Running on port: ", karaiPort)
+		logrus.Info("Coordinator: ", isCoordinator)
+	} else {
+		logrus.Debug("launching as normal user on port: ", karaiPort)
+	}
+}
+
 // Hello Karai
 func main() {
+	parseFlags()
+	announce()
 	clearPeerID(configPeerIDFile)
 	locateGraphDir()
 	checkCreds()
 	ascii()
-	go restAPI()
+	if !isCoordinator {
+		logrus.Debug("isCoordinator == false, skipping webserver deployment")
+	} else {
+		go restAPI()
+	}
 	inputHandler()
 }
 
@@ -258,20 +281,22 @@ func (graphTx *GraphTx) hashTx() {
 
 // addTx This will add a transaction to the graph
 func (graph *Graph) addTx(txType int, data string) {
-	// logrus.Debug("Adding a Tx")
-	prevTx := graph.transactions[len(graph.transactions)-1]
-	new := txConstructor(txType, data, prevTx.Hash)
-	graph.transactions = append(graph.transactions, new)
+	if !isCoordinator {
+		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
+	} else {
+		logrus.Debug("Adding a Tx")
+		prevTx := graph.transactions[len(graph.transactions)-1]
+		new := txConstructor(txType, data, prevTx.Hash)
+		graph.transactions = append(graph.transactions, new)
+	}
 }
 
-func pushIPFS() {
+func createCID() {
 	start := time.Now()
-
 	matches, _ := filepath.Glob(graphDir + "/*.json")
 	for _, match := range matches {
 		pushTx(match)
 	}
-
 	end := time.Since(start)
 	fmt.Println("Finished in: ", end)
 }
@@ -298,18 +323,21 @@ func printTx(file string) string {
 }
 
 func appendGraphCID(cid string) {
-	hashfile, err := os.OpenFile(hashDat,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		handle("something went wrong: ", err)
-	}
-	defer hashfile.Close()
-	if isExist(cid, hashDat) {
-		fmt.Printf("%v", color.RedString("\nDuplicate! Skipping...\n"))
+	if !isCoordinator {
+		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
 	} else {
-		hashfile.WriteString(cid + "\n")
+		hashfile, err := os.OpenFile(hashDat,
+			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			handle("something went wrong: ", err)
+		}
+		defer hashfile.Close()
+		if isExist(cid, hashDat) {
+			fmt.Printf("%v", color.RedString("\nDuplicate! Skipping...\n"))
+		} else {
+			hashfile.WriteString(cid + "\n")
+		}
 	}
-
 }
 
 func isExist(str, filepath string) bool {
@@ -320,10 +348,14 @@ func isExist(str, filepath string) bool {
 
 // addMilestone This will add a milestone to the graph
 func (graph *Graph) addMilestone(data string) {
-	prevTransaction := graph.transactions[len(graph.transactions)-1]
-	// paramFile, _ = os.Open("./config/milestone.json")
-	new := txConstructor(1, data, prevTransaction.Hash)
-	graph.transactions = append(graph.transactions, new)
+	if !isCoordinator {
+		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
+	} else {
+		prevTransaction := graph.transactions[len(graph.transactions)-1]
+		// paramFile, _ = os.Open("./config/milestone.json")
+		new := txConstructor(1, data, prevTransaction.Hash)
+		graph.transactions = append(graph.transactions, new)
+	}
 }
 
 // txConstructor This will construct a tx
@@ -331,11 +363,11 @@ func txConstructor(txType int, data string, prevHash []byte) *GraphTx {
 	transaction := &GraphTx{txType, []byte{}, []byte(data), prevHash}
 	transaction.hashTx()
 	return transaction
+
 }
 
 // rootTx Transaction channels start with a rootTx transaction always
 func rootTx() *GraphTx {
-	var isCoordinator bool = true
 	fmt.Printf("Coordinator status: %t", isCoordinator)
 	return txConstructor(0, "Karai Transaction Channel - Root", []byte{})
 }
@@ -365,19 +397,23 @@ func portToHex(port string) string {
 
 // generatePointer create the TRTL <=> Karai pointer
 func generatePointer() {
-	logrus.Debug("Creating a new Karai <=> TRTL pointer")
-	readerKtxIP := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter Karai Coordinator IP: ")
-	ktxIP, _ := readerKtxIP.ReadString('\n')
-	readerKtxPort := bufio.NewReader(os.Stdin)
-	fmt.Print("Enter Karai Coordinator Port: ")
-	ktxPort, _ := readerKtxPort.ReadString('\n')
-	ip := v4ToHex(strings.TrimRight(ktxIP, "\n"))
-	port := portToHex(strings.TrimRight(ktxPort, "\n"))
-	fmt.Printf("\nGenerating pointer for %s:%s\n", strings.TrimRight(ktxIP, "\n"), ktxPort)
-	fmt.Println("Your pointer is: ")
-	fmt.Printf("Hex:\t6b747828%s%s29", ip, port)
-	fmt.Println("\nAscii:\tktx(" + strings.TrimRight(ktxIP, "\n") + ":" + strings.TrimRight(ktxPort, "\n") + ")")
+	if !isCoordinator {
+		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
+	} else {
+		logrus.Debug("Creating a new Karai <=> TRTL pointer")
+		readerKtxIP := bufio.NewReader(os.Stdin)
+		fmt.Print("Enter Karai Coordinator IP: ")
+		ktxIP, _ := readerKtxIP.ReadString('\n')
+		readerKtxPort := bufio.NewReader(os.Stdin)
+		fmt.Print("Enter Karai Coordinator Port: ")
+		ktxPort, _ := readerKtxPort.ReadString('\n')
+		ip := v4ToHex(strings.TrimRight(ktxIP, "\n"))
+		port := portToHex(strings.TrimRight(ktxPort, "\n"))
+		fmt.Printf("\nGenerating pointer for %s:%s\n", strings.TrimRight(ktxIP, "\n"), ktxPort)
+		fmt.Println("Your pointer is: ")
+		fmt.Printf("Hex:\t6b747828%s%s29", ip, port)
+		fmt.Println("\nAscii:\tktx(" + strings.TrimRight(ktxIP, "\n") + ":" + strings.TrimRight(ktxPort, "\n") + ")")
+	}
 }
 
 // loadMilestoneJSON Read pending milestone Tx JSON
@@ -542,99 +578,108 @@ func menuCreatePeer(channel string) {
 
 // spawnChannel Create a Tx Channel, Root Tx and Milestone, listen for Tx
 func spawnChannel() {
-	// Generate Root Tx
-	graph := spawnGraph()
-	// Add the current milestone.json in config
-	graph.addMilestone(loadMilestoneJSON())
-	graph.addTx(2, "{\"tx_slot\": 3}")
-	// go txHandler()
-	// Report Txs
-	fmt.Printf("\n\nTx Legend: %v %v %v\n", color.YellowString("Root"), color.GreenString("Milestone"), color.BlueString("Normal"))
-	for key, transaction := range graph.transactions {
-		var hash string = fmt.Sprintf("%x", transaction.Hash)
-		var prevHash string = fmt.Sprintf("%x", transaction.PrevHash)
-		// Root Tx will not have a previous hash
-		if prevHash == "" {
-			dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.TxType) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_data\": \"" + string(transaction.Extra) + "\"\n}"
-			f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
-			w := bufio.NewWriter(f)
-			w.WriteString(dataString)
-			w.Flush()
-			// fmt.Printf("\nTx(%x) %x\n", key, transaction.Hash)
-			fmt.Printf("\nTx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
-		} else if len(prevHash) > 2 {
-			dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.TxType) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_prev\": \"" + prevHash + "\",\n\t\"tx_data\": " + string(transaction.Extra) + "\n}"
-			f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
-			w := bufio.NewWriter(f)
-			w.WriteString(dataString)
-			w.Flush()
-			// Indicate Tx type by color
-			if transaction.TxType == 0 {
-				// Root Tx
-				fmt.Printf("Tx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
-			} else if transaction.TxType == 1 {
-				// Milestone Tx
-				fmt.Printf("Tx(%v) %x\n", color.GreenString(strconv.Itoa(key)), transaction.Hash)
-			} else if transaction.TxType == 2 {
-				// Normal Tx
-				fmt.Printf("Tx(%v) %x\n", color.BlueString(strconv.Itoa(key)), transaction.Hash)
+	if !isCoordinator {
+		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
+	} else {
+		// Generate Root Tx
+		graph := spawnGraph()
+		// Add the current milestone.json in config
+		graph.addMilestone(loadMilestoneJSON())
+		graph.addTx(2, "{\"tx_slot\": 3}")
+		// go txHandler()
+		// Report Txs
+		fmt.Printf("\n\nTx Legend: %v %v %v\n", color.YellowString("Root"), color.GreenString("Milestone"), color.BlueString("Normal"))
+		for key, transaction := range graph.transactions {
+			var hash string = fmt.Sprintf("%x", transaction.Hash)
+			var prevHash string = fmt.Sprintf("%x", transaction.PrevHash)
+			// Root Tx will not have a previous hash
+			if prevHash == "" {
+				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.TxType) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_data\": \"" + string(transaction.Extra) + "\"\n}"
+				f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
+				w := bufio.NewWriter(f)
+				w.WriteString(dataString)
+				w.Flush()
+				// fmt.Printf("\nTx(%x) %x\n", key, transaction.Hash)
+				fmt.Printf("\nTx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
+			} else if len(prevHash) > 2 {
+				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.TxType) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_prev\": \"" + prevHash + "\",\n\t\"tx_data\": " + string(transaction.Extra) + "\n}"
+				f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
+				w := bufio.NewWriter(f)
+				w.WriteString(dataString)
+				w.Flush()
+				// Indicate Tx type by color
+				if transaction.TxType == 0 {
+					// Root Tx
+					fmt.Printf("Tx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
+				} else if transaction.TxType == 1 {
+					// Milestone Tx
+					fmt.Printf("Tx(%v) %x\n", color.GreenString(strconv.Itoa(key)), transaction.Hash)
+				} else if transaction.TxType == 2 {
+					// Normal Tx
+					fmt.Printf("Tx(%v) %x\n", color.BlueString(strconv.Itoa(key)), transaction.Hash)
+				}
 			}
 		}
+		fmt.Println()
 	}
-	fmt.Println()
 }
 
 // benchmark Add a number of transactions and time the execution
 func benchmark() {
-	benchTxCount := 1000000
-	graph := spawnGraph()
-	graph.addMilestone(loadMilestoneJSON())
-	count := 0
-	ascii()
-	fmt.Printf("Benchmark: %d transactions\n", benchTxCount)
-	fmt.Println("Starting in 5 seconds. Press CTRL C to interrupt.")
-	time.Sleep(5 * time.Second)
-	start := time.Now()
-	for i := 1; i < benchTxCount; i++ {
-		count += i
-		dataString := "{\"tx_slot\": " + strconv.Itoa(i+1) + "}"
-		graph.addTx(2, dataString)
-	}
-	end := time.Since(start)
-	fmt.Printf("\n\nTx Legend: %v %v %v\n", color.YellowString("Root"), color.GreenString("Milestone"), color.BlueString("Normal"))
-	for key, transaction := range graph.transactions {
-		var hash string = fmt.Sprintf("%x", transaction.Hash)
-		var prevHash string = fmt.Sprintf("%x", transaction.PrevHash)
-		// Root Tx will not have a previous hash
-		if prevHash == "" {
-			dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.TxType) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_data\": \"" + string(transaction.Extra) + "\"\n}"
-			f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
-			w := bufio.NewWriter(f)
-			w.WriteString(dataString)
-			w.Flush()
-			// fmt.Printf("\nTx(%x) %x\n", key, transaction.Hash)
-			fmt.Printf("\nTx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
-		} else if len(prevHash) > 2 {
-			dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.TxType) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_prev\": \"" + prevHash + "\",\n\t\"tx_data\": " + string(transaction.Extra) + "\n}"
-			f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
-			w := bufio.NewWriter(f)
-			w.WriteString(dataString)
-			w.Flush()
-			// Indicate Tx type by color
-			if transaction.TxType == 0 {
-				// Root Tx
-				fmt.Printf("Tx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
-			} else if transaction.TxType == 1 {
-				// Milestone Tx
-				fmt.Printf("Tx(%v) %x\n", color.GreenString(strconv.Itoa(key)), transaction.Hash)
-			} else if transaction.TxType == 2 {
-				// Normal Tx
-				fmt.Printf("Tx(%v) %x\n", color.BlueString(strconv.Itoa(key)), transaction.Hash)
+	if !isCoordinator {
+		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
+
+	} else {
+		benchTxCount := 1000000
+		graph := spawnGraph()
+		graph.addMilestone(loadMilestoneJSON())
+		count := 0
+		ascii()
+		fmt.Printf("Benchmark: %d transactions\n", benchTxCount)
+		fmt.Println("Starting in 5 seconds. Press CTRL C to interrupt.")
+		time.Sleep(5 * time.Second)
+		start := time.Now()
+		for i := 1; i < benchTxCount; i++ {
+			count += i
+			dataString := "{\"tx_slot\": " + strconv.Itoa(i+1) + "}"
+			graph.addTx(2, dataString)
+		}
+		end := time.Since(start)
+		fmt.Printf("\n\nTx Legend: %v %v %v\n", color.YellowString("Root"), color.GreenString("Milestone"), color.BlueString("Normal"))
+		for key, transaction := range graph.transactions {
+			var hash string = fmt.Sprintf("%x", transaction.Hash)
+			var prevHash string = fmt.Sprintf("%x", transaction.PrevHash)
+			// Root Tx will not have a previous hash
+			if prevHash == "" {
+				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.TxType) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_data\": \"" + string(transaction.Extra) + "\"\n}"
+				f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
+				w := bufio.NewWriter(f)
+				w.WriteString(dataString)
+				w.Flush()
+				// fmt.Printf("\nTx(%x) %x\n", key, transaction.Hash)
+				fmt.Printf("\nTx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
+			} else if len(prevHash) > 2 {
+				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.TxType) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_prev\": \"" + prevHash + "\",\n\t\"tx_data\": " + string(transaction.Extra) + "\n}"
+				f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
+				w := bufio.NewWriter(f)
+				w.WriteString(dataString)
+				w.Flush()
+				// Indicate Tx type by color
+				if transaction.TxType == 0 {
+					// Root Tx
+					fmt.Printf("Tx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
+				} else if transaction.TxType == 1 {
+					// Milestone Tx
+					fmt.Printf("Tx(%v) %x\n", color.GreenString(strconv.Itoa(key)), transaction.Hash)
+				} else if transaction.TxType == 2 {
+					// Normal Tx
+					fmt.Printf("Tx(%v) %x\n", color.BlueString(strconv.Itoa(key)), transaction.Hash)
+				}
 			}
 		}
+		fmt.Println()
+		fmt.Printf("%d Transactions in %s", benchTxCount, end)
 	}
-	fmt.Println()
-	fmt.Printf("%d Transactions in %s", benchTxCount, end)
 }
 
 // locateGraphDir find graph storage, create if missing.
@@ -677,7 +722,7 @@ func inputHandler() {
 			menuGetContainerTransactions()
 		} else if strings.Compare("push-graph", text) == 0 {
 			logrus.Debug("Opening Graph History")
-			pushIPFS()
+			createCID()
 		} else if strings.Compare("open-wallet-info", text) == 0 {
 			logrus.Debug("Opening Wallet Info")
 			menuOpenWalletInfo()
@@ -718,9 +763,12 @@ func menu() {
 	color.Set(color.FgGreen)
 	fmt.Println("\nCHANNEL_OPTIONS")
 	color.Set(color.FgWhite)
-	fmt.Println("create-channel \t\t Create a karai transaction channel")
-	fmt.Println("generate-pointer \t Generate a Karai <=> TRTL pointer")
-	fmt.Println("benchmark \t\t Conducts timed benchmark")
+	if !isCoordinator {
+	} else {
+		fmt.Println("create-channel \t\t Create a karai transaction channel")
+		fmt.Println("generate-pointer \t Generate a Karai <=> TRTL pointer")
+		fmt.Println("benchmark \t\t Conducts timed benchmark")
+	}
 	fmt.Println("push-graph \t\t Prints graph history")
 	color.Set(color.FgGreen)
 	fmt.Println("\nWALLET_API_OPTIONS")
@@ -735,7 +783,10 @@ func menu() {
 	color.Set(color.FgWhite)
 	fmt.Println("connect-channel <ktx> \t Connects to channel")
 	color.Set(color.FgHiBlack)
-	fmt.Println("show-multiaddr \t\t Displays multiaddr address")
+	if !isCoordinator {
+	} else {
+		fmt.Println("show-multiaddr \t\t Displays multiaddr address")
+	}
 	fmt.Println("list-servers \t\t Lists pinning servers")
 	color.Set(color.FgGreen)
 	fmt.Println("\nGENERAL_OPTIONS")
