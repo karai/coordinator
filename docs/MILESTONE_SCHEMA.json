@@ -1,0 +1,164 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "type": "object",
+    "title": "Karai - Milestone Data Schema",
+    "description": "This schema helps to annotate and validate Karai milestone data.",
+    "default": {},
+    "additionalProperties": true,
+    "required": [
+        "chan_milestone",
+        "channel_params",
+        "coord_params",
+        "peer_data"
+    ],
+    "properties": {
+        "chan_milestone": {
+            "type": "integer",
+            "title": "The Chan_milestone Schema",
+            "description": "An incremented 0 indexed number that initiates and defines a ruleset for the following stream of transactions.",
+            "default": 0,
+            "examples": [0, 1, 2]
+        },
+        "channel_params": {
+            "type": "object",
+            "title": "The Channel_params Schema",
+            "description": "A grouping of settings that govern how the graph behaves",
+            "default": {},
+            "examples": [
+                {
+                    "n_txspread": 1.0,
+                    "n_interval": 30.0,
+                    "public": true,
+                    "name": "Karai-transaction-channel"
+                }
+            ],
+            "additionalProperties": true,
+            "required": ["name", "public", "n_txspread", "n_interval"],
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "title": "The Name Schema",
+                    "description": "A human readable name for this transaction channel",
+                    "default": "Karai-transaction-channel",
+                    "examples": ["Karai-transaction-channel"]
+                },
+                "public": {
+                    "type": "boolean",
+                    "title": "The Public Schema",
+                    "description": "Determines whether the creation of the channel should also trigger the creation of a reference pointer on the TRTL chain",
+                    "default": true,
+                    "examples": [true]
+                },
+                "n_txspread": {
+                    "type": "string",
+                    "title": "The N_txspread Schema",
+                    "description": "Determines how much the tx graph should widen under load, per wave. (see tx wave diagram in design doc). 1 is linear mode.",
+                    "default": "1",
+                    "examples": ["1", "+1", "+2", "+4"]
+                },
+                "n_interval": {
+                    "type": "integer",
+                    "title": "The N_interval Schema",
+                    "description": "This is the number of seconds for the listen interval for ordering transactions when forming transaction waves.",
+                    "default": 30,
+                    "examples": [1, 5, 30, 120]
+                }
+            }
+        },
+        "coord_params": {
+            "type": "object",
+            "title": "The Coord_params Schema",
+            "description": "Is metadata pertaining to the channel coordinator node.",
+            "default": {},
+            "examples": [
+                {
+                    "patchSemver": 0.0,
+                    "majorSemver": 0.0,
+                    "address": "TRTLuxMpUNTBqfWshbc65E7Yqx17rQpHQZC5HyANaTL37AQm2fRsNDXG37jxPhXXa5NMJVLFJpQa9iQn9Se87VNuWwPHWScoZLY",
+                    "minorSemver": 1.0
+                }
+            ],
+            "additionalProperties": true,
+            "required": [
+                "majorSemver",
+                "minorSemver",
+                "patchSemver",
+                "address"
+            ],
+            "properties": {
+                "majorSemver": {
+                    "type": "integer",
+                    "title": "The Majorsemver Schema",
+                    "description": "Karai channel coordinator major version",
+                    "default": 0,
+                    "examples": [0.0]
+                },
+                "minorSemver": {
+                    "type": "integer",
+                    "title": "The Minorsemver Schema",
+                    "description": "Karai channel coordinator minor version",
+                    "default": 0,
+                    "examples": [1.0]
+                },
+                "patchSemver": {
+                    "type": "integer",
+                    "title": "The Patchsemver Schema",
+                    "description": "Karai channel coordinator patch version",
+                    "default": 0,
+                    "examples": [0.0]
+                },
+                "address": {
+                    "type": "string",
+                    "title": "The Address Schema",
+                    "description": "TRTL Address of this Karai node.",
+                    "default": "",
+                    "examples": [
+                        "TRTLuxMpUNTBqfWshbc65E7Yqx17rQpHQZC5HyANaTL37AQm2fRsNDXG37jxPhXXa5NMJVLFJpQa9iQn9Se87VNuWwPHWScoZLY"
+                    ]
+                }
+            }
+        },
+        "peer_data": {
+            "type": "object",
+            "title": "The Peer_data Schema",
+            "description": "Encapsulates IPFS peer information.",
+            "default": {},
+            "examples": [
+                {
+                    "ifps_peer_id": "QmfMAVSMyw4T9Mu3y8hM4phLWbM5NhdYuq5HRmKy8kX3SD",
+                    "ipfs_pub_key": "CAASpgIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDI3gvSHQ/V3o7wWLp+KLw8w4k74JGF7+lxPAK0Z6SAp2CELvr+FJfflcIAnOna5NekFj3oZhgI3sTAMRixn802S+OUmBuFrtdxd8SX1PjwCmdzm+xTWU8IdrZbxzeHY/n4i34ZyOEybdWEvR4oExplxTk9mnZmKvZvIH3lCQIbfkhoJFTB4D4R5KG5YcEQ6/2hLvzdoMyUcVZRf7dRxWUyoXRdE5810tsCBECrRzLX9nWERP/ki4elvJlDQYU5bHUazZy4tbl9kEbP28gjm9XGYKxjAWyXG+uMZoohCujSNN3SQzo/5zE4VWzi4LC01ourl8xR9pd5HhzH1oKcYBoZAgMBAAE=",
+                    "ip4": "123.34.45.56"
+                }
+            ],
+            "additionalProperties": true,
+            "required": ["ip4", "ifps_peer_id", "ipfs_pub_key"],
+            "properties": {
+                "ip4": {
+                    "type": "string",
+                    "title": "The Ip4 Schema",
+                    "description": "ip4 address of this peer",
+                    "default": "0.0.0.0",
+                    "examples": ["123.34.45.56"]
+                },
+                "ifps_peer_id": {
+                    "type": "string",
+                    "title": "The Ifps_peer_id Schema",
+                    "description": "Declares IPFS peer ID of this peer.",
+                    "default": "",
+                    "examples": [
+                        "QmfMAVSMyw4T9Mu3y8hM4phLWbM5NhdYuq5HRmKy8kX3SD"
+                    ]
+                },
+                "ipfs_pub_key": {
+                    "type": "string",
+                    "title": "The Ipfs_pub_key Schema",
+                    "description": "Declares the IPFS public key of this peer.",
+                    "default": "",
+                    "examples": [
+                        "CAASpgIwggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDI3gvSHQ/V3o7wWLp+KLw8w4k74JGF7+lxPAK0Z6SAp2CELvr+FJfflcIAnOna5NekFj3oZhgI3sTAMRixn802S+OUmBuFrtdxd8SX1PjwCmdzm+xTWU8IdrZbxzeHY/n4i34ZyOEybdWEvR4oExplxTk9mnZmKvZvIH3lCQIbfkhoJFTB4D4R5KG5YcEQ6/2hLvzdoMyUcVZRf7dRxWUyoXRdE5810tsCBECrRzLX9nWERP/ki4elvJlDQYU5bHUazZy4tbl9kEbP28gjm9XGYKxjAWyXG+uMZoohCujSNN3SQzo/5zE4VWzi4LC01ourl8xR9pd5HhzH1oKcYBoZAgMBAAE="
+                    ]
+                }
+            }
+        }
+    }
+}
