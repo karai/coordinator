@@ -38,7 +38,7 @@ const appName = "go-karai"
 const appDev = "The TurtleCoin Developers"
 const appDescription = appName + " - Karai Transaction Channels"
 const appLicense = "https://choosealicense.com/licenses/mit/"
-const appRepository = "https://github.com/turtlecoin/go-karai"
+const appRepository = "https://github.com/karai/go-karai"
 const appURL = "https://karai.io"
 
 // File & folder constants
