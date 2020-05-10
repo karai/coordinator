@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/fatih/color"
+	externalip "github.com/glendc/go-external-ip"
 	"github.com/gorilla/mux"
 	shell "github.com/ipfs/go-ipfs-api"
 	"github.com/libp2p/go-libp2p"
@@ -50,7 +51,7 @@ const configPeerIDFile = p2pConfigDir + "/peer.id"
 
 // Coordinator values
 var isCoordinator bool = false
-var karaiPort string
+var karaiPort int
 var p2pPeerID string
 
 // Version string
@@ -58,7 +59,7 @@ func semverInfo() string {
 	var majorSemver, minorSemver, patchSemver, wholeString string
 	majorSemver = "0"
 	minorSemver = "5"
-	patchSemver = "1"
+	patchSemver = "2"
 	wholeString = majorSemver + "." + minorSemver + "." + patchSemver
 	return wholeString
 }
@@ -91,7 +92,7 @@ type GraphTx struct {
 // }
 
 func parseFlags() {
-	flag.StringVar(&karaiPort, "port", "4200", "Port to run Karai Coordinator on.")
+	flag.IntVar(&karaiPort, "port", 4200, "Port to run Karai Coordinator on.")
 	flag.BoolVar(&isCoordinator, "coordinator", false, "Run as coordinator.")
 	// flag.StringVar(&karaiPort, "karaiPort", "4200", "Port to run Karai")
 	flag.Parse()
@@ -99,8 +100,10 @@ func parseFlags() {
 
 func announce() {
 	if isCoordinator {
-		logrus.Info("Running on port: ", karaiPort)
 		logrus.Info("Coordinator: ", isCoordinator)
+		revealIP()
+
+		logrus.Info("Running on port: ", karaiPort)
 	} else {
 		logrus.Debug("launching as normal user on port: ", karaiPort)
 	}
@@ -157,7 +160,16 @@ func restAPI() {
 	// api.HandleFunc("", put).Methods(http.MethodPut)
 	// api.HandleFunc("", delete).Methods(http.MethodDelete)
 
-	logrus.Error(http.ListenAndServe(":"+karaiPort, r))
+	logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiPort), r))
+}
+
+func revealIP() string {
+	// consensus := externalip.
+	consensus := externalip.DefaultConsensus(nil, nil)
+	ip, err := consensus.ExternalIP()
+	handle("Something went wrong getting the external IP: ", err)
+	logrus.Info("External IP: ", ip.String())
+	return ip.String()
 }
 
 func notFound(w http.ResponseWriter, r *http.Request) {
@@ -179,9 +191,7 @@ func returnPeerID(w http.ResponseWriter, r *http.Request) {
 
 	peerFile, err := os.OpenFile(configPeerIDFile,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		handle("something went wrong creating a fresh peer.id file: ", err)
-	}
+	handle("Something went wrong creating a fresh Peer ID file: ", err)
 	defer peerFile.Close()
 
 	fileToRead, err := ioutil.ReadFile(configPeerIDFile)
@@ -215,24 +225,6 @@ func returnTransactions(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("{}"))
 	w.Write([]byte("\n]"))
 }
-
-// func post(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusCreated)
-// 	w.Write([]byte(`{"": ""}`))
-// }
-
-// func put(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusAccepted)
-// 	w.Write([]byte(`{"": ""}`))
-// }
-
-// func delete(w http.ResponseWriter, r *http.Request) {
-// 	w.Header().Set("Content-Type", "application/json")
-// 	w.WriteHeader(http.StatusOK)
-// 	w.Write([]byte(`{"": ""}`))
-// }
 
 // Splash logo
 func ascii() {
@@ -307,10 +299,7 @@ func pushTx(file string) string {
 	fmt.Print(string(dat) + "\n")
 	sh := shell.NewShell("localhost:5001")
 	cid, err := sh.Add(strings.NewReader(string(dat)))
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "error: %s", err)
-		os.Exit(1)
-	}
+	handle("Something went wrong pushing the tx: ", err)
 	fmt.Printf(color.GreenString("%v %v\n%v %v", color.YellowString("Tx:"), color.GreenString(file), color.YellowString("CID: "), color.GreenString(cid)))
 	appendGraphCID(cid)
 	return cid
@@ -328,9 +317,7 @@ func appendGraphCID(cid string) {
 	} else {
 		hashfile, err := os.OpenFile(hashDat,
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			handle("something went wrong: ", err)
-		}
+		handle("Something went wrong appending the graph CID: ", err)
 		defer hashfile.Close()
 		if isExist(cid, hashDat) {
 			fmt.Printf("%v", color.RedString("\nDuplicate! Skipping...\n"))
@@ -497,84 +484,11 @@ func menuCreatePeer(channel string) {
 	}
 	openPeerIDFile, err := os.OpenFile(configPeerIDFile,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	if err != nil {
-		handle("something went wrong: ", err)
-	}
+	handle("Something went wrong opening the peer ID: ", err)
 	defer openPeerIDFile.Close()
 
 	openPeerIDFile.WriteString(p2pPeerID)
 }
-
-// // createPeer Create Libp2p Peer
-// func createPeer() peer.ID {
-// 	ctx, cancel := context.WithCancel(context.Background())
-// 	defer cancel()
-// 	priv, _, err := crypto.GenerateKeyPair(
-// 		crypto.Ed25519, -1,
-// 	)
-// 	handle("Error generating libp2p keypair: ", err)
-// 	var idht *dht.IpfsDHT
-// 	nodePeer, err := libp2p.New(ctx,
-// 		libp2p.Identity(priv),
-// 		libp2p.ListenAddrStrings(
-// 			"/ip4/0.0.0.0/tcp/9000",
-// 			"/ip4/0.0.0.0/udp/9000/quic",
-// 		),
-// 		libp2p.Security(libp2ptls.ID, libp2ptls.New),
-// 		libp2p.Security(secio.ID, secio.New),
-// 		libp2p.Transport(libp2pquic.NewTransport),
-// 		libp2p.DefaultTransports,
-// 		libp2p.ConnectionManager(connmgr.NewConnManager(
-// 			100,         // Lowwater
-// 			400,         // HighWater,
-// 			time.Minute, // GracePeriod
-// 		)),
-// 		libp2p.NATPortMap(),
-// 		libp2p.Routing(func(h host.Host) (routing.PeerRouting, error) {
-// 			idht, err = dht.New(ctx, h)
-// 			return idht, err
-// 		}),
-// 		libp2p.EnableAutoRelay(),
-// 	)
-// 	handle("Error connecting as libp2p peer: ", err)
-// 	_, err = autonat.NewAutoNATService(ctx, nodePeer,
-// 		libp2p.Security(libp2ptls.ID, libp2ptls.New),
-// 		libp2p.Security(secio.ID, secio.New),
-// 		libp2p.Transport(libp2pquic.NewTransport),
-// 		libp2p.DefaultTransports,
-// 	)
-// 	for _, addr := range dht.DefaultBootstrapPeers {
-// 		pi, _ := peer.AddrInfoFromP2pAddr(addr)
-// 		nodePeer.Connect(ctx, *pi)
-// 	}
-
-// 	peerInfo := peerstore.AddrInfo{
-// 		ID:    nodePeer.ID(),
-// 		Addrs: nodePeer.Addrs(),
-// 	}
-// 	addrs, err := peerstore.AddrInfoToP2pAddrs(&peerInfo)
-// 	fmt.Println("li", addrs[0])
-// 	return nodePeer.ID()
-// }
-
-// P2P stream open r/w
-// func handleStream(s network.Stream) {
-// 	logrus.Debug("New stream")
-// 	rw := bufio.NewReadWriter(bufio.NewReader(s), bufio.NewWriter(s))
-// 	go readData(rw)
-// 	go writeData(rw)
-// }
-
-// P2P read buffer, consume graph, verify integrity
-// func readData(rw *bufio.ReadWriter) {
-//  // TODO: Consume graph
-//  // TODO: When Tx is received, increment TxPoolDepth
-// }
-
-// P2P write buffer
-// func writeData(rw *bufio.ReadWriter) {
-// 	stdReader := bufio.NewReader(os.Stdin)
-// }
 
 // spawnChannel Create a Tx Channel, Root Tx and Milestone, listen for Tx
 func spawnChannel() {
