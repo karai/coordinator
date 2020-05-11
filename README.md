@@ -68,7 +68,7 @@ go build && ./go-karai
 -   `gofmt` is used on all files.
 -   go modules are used to manage dependencies.
 
-## Contributing Projects
+## Thanks to:
 
 [![turtlecoin](https://user-images.githubusercontent.com/34389545/80266529-fb0b6880-8661-11ea-9a75-4cb066834775.png)](https://turtlecoin.lol)
 [![IPFS](https://user-images.githubusercontent.com/34389545/80266356-0c07aa00-8661-11ea-8308-84639318213a.png)](https://ipfs.io)
