@@ -27,7 +27,6 @@ import (
 	peerstore "github.com/libp2p/go-libp2p-core/peer"
 	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
 	"github.com/multiformats/go-multiaddr"
-	ma "github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
 	rashedCrypto "github.com/turtlecoin/go-turtlecoin/crypto"
 	rashedMnemonic "github.com/turtlecoin/go-turtlecoin/walletbackend/mnemonics"
@@ -123,30 +122,6 @@ func main() {
 		go restAPI()
 	}
 	inputHandler()
-}
-
-func multiAddr() {
-
-	// construct from a string (err signals parse failure)
-	m1, err := ma.NewMultiaddr("/ip4/127.0.0.1/udp/1234")
-	handle("", err)
-	// construct from bytes (err signals parse failure)
-	m2, err := ma.NewMultiaddrBytes(m1.Bytes())
-	handle("", err)
-	fmt.Println(m2)
-	// // true
-	// // strings.Equal(m1.String(), "/ip4/127.0.0.1/udp/1234")
-	// // strings.Equal(m1.String(), m2.String())
-	// bytes.Equal(m1.Bytes(), m2.Bytes())
-	// m1.Equal(m2)
-	// m2.Equal(m1)
-
-	// // tunneling (en/decap)
-	// printer, _ := ma.NewMultiaddr("/ip4/192.168.0.13/tcp/80")
-	// proxy, _ := ma.NewMultiaddr("/ip4/10.20.30.40/tcp/443")
-	// printerOverProxy := proxy.Encapsulate(printer)
-	// proxyAgain := printerOverProxy.Decapsulate(printer)
-	// fmt.Println(proxyAgain)
 }
 
 func restAPI() {
@@ -431,7 +406,7 @@ func connectChannel(channel string) (bool, string) {
 	ctx := context.Background()
 	node, err := libp2p.New(ctx,
 		libp2p.ListenAddrStrings("/ip4/127.0.0.1/tcp/0"),
-		libp2p.Ping(false),
+		// libp2p.Ping(false),
 	)
 	handle("Something went wrong creating new peer context: ", err)
 	pingService := &ping.PingService{Host: node}
@@ -647,8 +622,6 @@ func inputHandler() {
 			// 	menuCreatePeer()
 		} else if strings.HasPrefix(text, "connect-channel") {
 			menuCreatePeer(strings.TrimPrefix(text, "connect-channel "))
-		} else if strings.Compare("show-multiaddr", text) == 0 {
-			multiAddr()
 		} else if strings.Compare("exit", text) == 0 {
 			logrus.Warning("Exiting")
 			menuExit()
@@ -682,8 +655,8 @@ func menu() {
 		fmt.Println("create-channel \t\t Create a karai transaction channel")
 		fmt.Println("generate-pointer \t Generate a Karai <=> TRTL pointer")
 		fmt.Println("benchmark \t\t Conducts timed benchmark")
+		fmt.Println("push-graph \t\t Prints graph history")
 	}
-	fmt.Println("push-graph \t\t Prints graph history")
 	color.Set(color.FgGreen)
 	fmt.Println("\nWALLET_API_OPTIONS")
 	color.Set(color.FgWhite)
@@ -693,14 +666,10 @@ func menu() {
 	color.Set(color.FgHiBlack)
 	fmt.Println("wallet-balance \t\t Displays wallet balance")
 	color.Set(color.FgGreen)
-	fmt.Println("\nIPFS_OPTIONS")
+	fmt.Println("\nKARAI_OPTIONS")
 	color.Set(color.FgWhite)
 	fmt.Println("connect-channel <ktx> \t Connects to channel")
 	color.Set(color.FgHiBlack)
-	if !isCoordinator {
-	} else {
-		fmt.Println("show-multiaddr \t\t Displays multiaddr address")
-	}
 	fmt.Println("list-servers \t\t Lists pinning servers")
 	color.Set(color.FgGreen)
 	fmt.Println("\nGENERAL_OPTIONS")

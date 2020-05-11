@@ -28,3 +28,6 @@ graph/*.json
 notes
 notes/
 config/p2p/peer.id
+builds
+builds/
+./builds
