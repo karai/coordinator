@@ -166,7 +166,7 @@ func returnPeerID(w http.ResponseWriter, r *http.Request) {
 
 	peerFile, err := os.OpenFile(configPeerIDFile,
 		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	handle("Something went wrong creating a fresh Peer ID file: ", err)
+	handle("Can't find peer.id file: ", err)
 	defer peerFile.Close()
 
 	fileToRead, err := ioutil.ReadFile(configPeerIDFile)
@@ -175,13 +175,6 @@ func returnPeerID(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("{\"p2p_peer_ID\": \"" + string(fileToRead) + "\"}"))
 
 }
-
-// func printFile(fileToPrint string) string {
-// 	file, err := ioutil.ReadFile(configPeerIDFile)
-// 	handle("There was a problem reading the peer file", err)
-// 	fmt.Print(string(file))
-// 	return string(file)
-// }
 
 func returnVersion(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
@@ -406,7 +399,7 @@ func connectChannel(channel string) (bool, string) {
 	ctx := context.Background()
 	node, err := libp2p.New(ctx,
 		libp2p.ListenAddrStrings("/ip4/127.0.0.1/tcp/0"),
-		// libp2p.Ping(false),
+		libp2p.Ping(false),
 	)
 	handle("Something went wrong creating new peer context: ", err)
 	pingService := &ping.PingService{Host: node}
@@ -450,6 +443,11 @@ func clearPeerID(file string) {
 
 func menuCreatePeer(channel string) {
 	// clearPeerID(configPeerIDFile)
+	openPeerIDFile, err := os.OpenFile(configPeerIDFile,
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	handle("Something went wrong opening the peer ID: ", err)
+	defer openPeerIDFile.Close()
+
 	status, p2pPeerID := connectChannel(channel)
 	if status == true {
 		fmt.Println("Success!")
@@ -457,11 +455,6 @@ func menuCreatePeer(channel string) {
 		color.Set(color.FgHiRed, color.Bold)
 		fmt.Println("Connection failed: ", status)
 	}
-	openPeerIDFile, err := os.OpenFile(configPeerIDFile,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	handle("Something went wrong opening the peer ID: ", err)
-	defer openPeerIDFile.Close()
-
 	openPeerIDFile.WriteString(p2pPeerID)
 }
 
