@@ -19,6 +19,19 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// Graph This is the structure of the Graph
+type Graph struct {
+	Transactions []*GraphTx `json:"graph_transactions"`
+}
+
+// GraphTx This is the structure of the transaction
+type GraphTx struct {
+	Type int    `json:"tx_type"`
+	Hash []byte `json:"tx_hash"`
+	Data []byte `json:"tx_data"`
+	Prev []byte `json:"tx_prev"`
+}
+
 // printGraph a different way to look at transaction history
 // this should probably be deleted.
 func printGraph(directory string) {

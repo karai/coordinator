@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 
@@ -52,5 +53,23 @@ func menuExit() {
 func handle(msg string, err error) {
 	if err != nil {
 		logrus.Error(msg, err)
+	}
+}
+
+func parseFlags() {
+	flag.IntVar(&karaiPort, "port", 4200, "Port to run Karai Coordinator on.")
+	flag.BoolVar(&isCoordinator, "coordinator", false, "Run as coordinator.")
+	// flag.StringVar(&karaiPort, "karaiPort", "4200", "Port to run Karai")
+	flag.Parse()
+}
+
+func announce() {
+	if isCoordinator {
+		logrus.Info("Coordinator: ", isCoordinator)
+		revealIP()
+
+		logrus.Info("Running on port: ", karaiPort)
+	} else {
+		logrus.Debug("launching as normal user on port: ", karaiPort)
 	}
 }
