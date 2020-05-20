@@ -10,7 +10,10 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// inputHandler present menu, accept user input
+// inputHandler This is a basic input loop that listens for
+// a few words that correspond to functions in the app. When
+// a command isn't understood, it displays the help menu and
+// returns to listening to input.
 func inputHandler() {
 	reader := bufio.NewReader(os.Stdin)
 	for {
@@ -76,7 +79,8 @@ func inputHandler() {
 	}
 }
 
-// provide list of commands
+// menu This is the body of text printed when the user
+// types 'help', 'menu' or any undefined input.
 func menu() {
 	color.Set(color.FgGreen)
 	fmt.Println("\nCHANNEL_OPTIONS")
