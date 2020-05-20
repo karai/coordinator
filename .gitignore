@@ -12,7 +12,7 @@ graph/*.dat
 graph/*.json
 .vscode/
 ./config/p2p/*
-
+main
 # Test binary, built with `go test -c`
 *.test
 
