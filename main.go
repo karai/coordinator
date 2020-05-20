@@ -3,10 +3,10 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"crypto/sha256"
 	"encoding/binary"
 	"encoding/hex"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -23,10 +23,6 @@ import (
 	externalip "github.com/glendc/go-external-ip"
 	"github.com/gorilla/mux"
 	shell "github.com/ipfs/go-ipfs-api"
-	"github.com/libp2p/go-libp2p"
-	peerstore "github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p/p2p/protocol/ping"
-	"github.com/multiformats/go-multiaddr"
 	"github.com/sirupsen/logrus"
 	rashedCrypto "github.com/turtlecoin/go-turtlecoin/crypto"
 	rashedMnemonic "github.com/turtlecoin/go-turtlecoin/walletbackend/mnemonics"
@@ -53,42 +49,23 @@ var isCoordinator bool = false
 var karaiPort int
 var p2pPeerID string
 
-// Version string
-func semverInfo() string {
-	var majorSemver, minorSemver, patchSemver, wholeString string
-	majorSemver = "0"
-	minorSemver = "5"
-	patchSemver = "2"
-	wholeString = majorSemver + "." + minorSemver + "." + patchSemver
-	return wholeString
-}
+// Client Header
+var clientHeaderAppName string = appName
+var clientHeaderAppVersion string = semverInfo()
+var clientHeaderPeerID string
 
 // Graph This is the structure of the Graph
 type Graph struct {
-	transactions []*GraphTx
+	Transactions []*GraphTx `json:"graph_transactions"`
 }
 
 // GraphTx This is the structure of the transaction
 type GraphTx struct {
-	TxType   int
-	Hash     []byte
-	Extra    []byte
-	PrevHash []byte
-	// TxVer int
+	Type int    `json:"tx_type"`
+	Hash []byte `json:"tx_hash"`
+	Data []byte `json:"tx_data"`
+	Prev []byte `json:"tx_prev"`
 }
-
-// // SubGraph This is a struct for Tx wave construction
-// type SubGraph struct {
-// 	subGraphID       int
-// 	timeStamp        int64
-// 	milestone        int
-// 	transactions     []byte
-// 	subgraphChildren int
-// 	supgraphOrder    int
-// 	subgraphSize     int
-// 	subgraphPeers    []byte
-// 	waveTip          *GraphTx.Hash
-// }
 
 func parseFlags() {
 	flag.IntVar(&karaiPort, "port", 4200, "Port to run Karai Coordinator on.")
@@ -131,11 +108,12 @@ func restAPI() {
 	api.HandleFunc("/peer", returnPeerID).Methods(http.MethodGet)
 	api.HandleFunc("/version", returnVersion).Methods(http.MethodGet)
 	api.HandleFunc("/transactions", returnTransactions).Methods(http.MethodGet)
-	// api.HandleFunc("", post).Methods(http.MethodPost)
-	// api.HandleFunc("", put).Methods(http.MethodPut)
-	// api.HandleFunc("", delete).Methods(http.MethodDelete)
-
+	api.HandleFunc("/transaction/send", sendTransaction).Methods(http.MethodPost)
 	logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiPort), r))
+}
+
+func sendTransaction(w http.ResponseWriter, r *http.Request) {
+
 }
 
 func revealIP() string {
@@ -234,7 +212,7 @@ func generateEd25519() {
 // hashTx This will compute the tx hash using sha256
 func (graphTx *GraphTx) hashTx() {
 	// logrus.Debug("Hashing a Tx ", graphTx.Hash)
-	data := bytes.Join([][]byte{graphTx.Extra, graphTx.PrevHash}, []byte{})
+	data := bytes.Join([][]byte{graphTx.Data, graphTx.Prev}, []byte{})
 	hash := sha256.Sum256(data)
 	graphTx.Hash = hash[:]
 }
@@ -245,10 +223,39 @@ func (graph *Graph) addTx(txType int, data string) {
 		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
 	} else {
 		logrus.Debug("Adding a Tx")
-		prevTx := graph.transactions[len(graph.transactions)-1]
+		prevTx := graph.Transactions[len(graph.Transactions)-1]
 		new := txConstructor(txType, data, prevTx.Hash)
-		graph.transactions = append(graph.transactions, new)
+		graph.Transactions = append(graph.Transactions, new)
 	}
+}
+
+// // printGraph This will add a transaction to the graph
+// func printGraph(directory string) {
+//  jsonFile, err := os.Open(graphDir + "/" + "Tx_1.json")
+//  handle("derp we cant open this JSON: ", err)
+//  fmt.Println("Successfully Opened: " + graphDir)
+//  defer jsonFile.Close()
+//  byteValue, _ := ioutil.ReadAll(jsonFile)
+//  var result map[string]interface{}
+//  json.Unmarshal([]byte(byteValue), &result)
+//  fmt.Println(result["graph"])
+// }
+
+// printGraph This will add a transaction to the graph
+func printGraph(directory string) {
+	jsonFile, err := os.Open(directory + "/" + "Tx_1.json")
+	handle("Derp we can't open this JSON: ", err)
+	byteValue, _ := ioutil.ReadAll(jsonFile)
+	var Graph Graph
+	json.Unmarshal(byteValue, &Graph)
+	for i := 0; i < 20; i++ {
+		fmt.Println("\nhere we go")
+		fmt.Println(Graph.Transactions[i].Hash)
+		fmt.Println(Graph.Transactions[i].Prev)
+		fmt.Println(Graph.Transactions[i].Type)
+		fmt.Println(Graph.Transactions[i].Data)
+	}
+	defer jsonFile.Close()
 }
 
 func createCID() {
@@ -274,7 +281,8 @@ func pushTx(file string) string {
 }
 
 func printTx(file string) string {
-	dat, _ := ioutil.ReadFile(file)
+	dat, err := ioutil.ReadFile(file)
+	handle("derp, something went wrong", err)
 	datString := string(dat) + ",\n"
 	return datString
 }
@@ -306,10 +314,10 @@ func (graph *Graph) addMilestone(data string) {
 	if !isCoordinator {
 		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
 	} else {
-		prevTransaction := graph.transactions[len(graph.transactions)-1]
+		prevTransaction := graph.Transactions[len(graph.Transactions)-1]
 		// paramFile, _ = os.Open("./config/milestone.json")
 		new := txConstructor(1, data, prevTransaction.Hash)
-		graph.transactions = append(graph.transactions, new)
+		graph.Transactions = append(graph.Transactions, new)
 	}
 }
 
@@ -380,60 +388,10 @@ func loadMilestoneJSON() string {
 	// Kek
 }
 
-// // txHandler Wait for Tx, assemble subgraph
-// func txHandler() {
-// 	var txListenTime time.Duration = 10
-// 	var txPoolDepth int = 0
-// 	if txPoolDepth > 0 {
-// 		// if a tx is received, start the interval, listen for Tx, assemble subgraph
-// 		// var int64 SubGraph.timeStamp = time.Now().Unix()
-// 		// fmt.Println("Transaction Wave Forming...\nTimestamp: " + string(SubGraph.timeStamp))
-// 		time.Sleep(txListenTime * time.Second)
-// 		fmt.Println("Listening for " + string(txListenTime) + " seconds")
-// 	}
-// 	// order the transactions
-// 	// assign positions on graph
-// }
-
-func connectChannel(channel string) (bool, string) {
-	ctx := context.Background()
-	node, err := libp2p.New(ctx,
-		libp2p.ListenAddrStrings("/ip4/127.0.0.1/tcp/0"),
-		libp2p.Ping(false),
-	)
-	handle("Something went wrong creating new peer context: ", err)
-	pingService := &ping.PingService{Host: node}
-	node.SetStreamHandler(ping.ID, pingService.PingHandler)
-	peerInfo := peerstore.AddrInfo{
-		ID:    node.ID(),
-		Addrs: node.Addrs(),
-	}
-	color.Set(color.FgHiCyan, color.Bold)
-	addrs, _ := peerstore.AddrInfoToP2pAddrs(&peerInfo)
-	fmt.Println("\nlibp2p node address:")
-	color.Set(color.FgHiBlack, color.Bold)
-	fmt.Println(addrs[0])
-	// peerEndPointText, _ := fmt.Println(addrs[0])
-	addr, _ := multiaddr.NewMultiaddr(channel)
-	peer, _ := peerstore.AddrInfoFromP2pAddr(addr)
-	color.Set(color.FgHiCyan, color.Bold)
-	fmt.Println("\nConnecting to: ")
-	color.Set(color.FgHiBlack, color.Bold)
-	fmt.Println(addr)
-	ch := pingService.Ping(ctx, peer.ID)
-	res := <-ch
-	color.Set(color.FgHiRed, color.Bold)
-	if err := node.Close(); err != nil {
-		handle("\nClosing: ", err)
-	}
-	if res.RTT >= 0 {
-		color.Set(color.FgHiGreen, color.Bold)
-		fmt.Println("\nConnected to: ", addr, "in", res.RTT)
-		return true, addrs[0].String()
-	} else {
-		color.Set(color.FgHiRed, color.Bold)
-		return false, addrs[0].String()
-	}
+func validateKTX(channel string) bool {
+	// validate the ktx string with regex
+	// if it is valid, return bool true
+	return true
 }
 
 func clearPeerID(file string) {
@@ -441,22 +399,61 @@ func clearPeerID(file string) {
 	logrus.Debug(err)
 }
 
-func menuCreatePeer(channel string) {
-	// clearPeerID(configPeerIDFile)
-	openPeerIDFile, err := os.OpenFile(configPeerIDFile,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	handle("Something went wrong opening the peer ID: ", err)
-	defer openPeerIDFile.Close()
-
-	status, p2pPeerID := connectChannel(channel)
-	if status == true {
-		fmt.Println("Success!")
-	} else {
-		color.Set(color.FgHiRed, color.Bold)
-		fmt.Println("Connection failed: ", status)
-	}
-	openPeerIDFile.WriteString(p2pPeerID)
+func sendClientHeader(name, version, id, channel string) bool {
+	// var clientHeaderAppName string = appName
+	// var clientHeaderAppVersion string = semverInfo()
+	// var clientHeaderPeerID string
+	return true
 }
+
+func (graphTx *GraphTx) generalHash(response string) [32]byte {
+	hashedData := bytes.Join([][]byte{graphTx.Data, graphTx.Prev}, []byte{})
+	hash := sha256.Sum256(hashedData)
+	return hash
+}
+
+// func connectToChannel(channel string) {
+//  if validateKTX(channel) {
+//      if validateCoordVersion(channel) {
+//          //send client header to coord
+//          if sendClientHeader(clientHeaderAppName, clientHeaderAppVersion, clientHeaderPeerID, channel) {
+//              //coord should respond with most recent milestone
+//              //hash the milestone
+//              if generalHash(res.Body) == milestone.Hash {
+//                  sendClientMilestoneHash(channel)
+//              }
+//              //send the hash to coord
+//              //coord approves
+//              //send join tx
+//              //listen for events
+//          } else if sendClientHeader(clientHeaderAppName, clientHeaderAppVersion, clientHeaderPeerID, channel) {
+//              logrus.Error("Problem constructing or sending client header.")
+//          }
+//      } else if !validateCoordVersion(channel) {
+//          logrus.Error("Coordinator Version Not Accepted")
+//      }
+//  } else if !validateKTX(channel) {
+//      logrus.Error("KTX Invalid")
+//  }
+// }
+
+// func coordVersionHandler(w http.ResponseWriter, r *http.Request) {
+//  return
+// }
+
+// func validateCoordVersion(channel string) bool {
+//  logrus.Info("fetching coordinator version for ", channel)
+//  req, err := http.NewRequest("GET", channel, nil)
+//  handle("Error getting coord info: ", err)
+//  client := &http.Client{Timeout: time.Second * 10}
+//  resp, err := client.Do(req)
+//  handle("Error getting coord info: ", err)
+//  defer resp.Body.Close()
+//  body, err := ioutil.ReadAll(resp.Body)
+//  logrus.Debug(body)
+//  handle("Error getting coord info: ", err)
+//  return true
+// }
 
 // spawnChannel Create a Tx Channel, Root Tx and Milestone, listen for Tx
 func spawnChannel() {
@@ -471,12 +468,12 @@ func spawnChannel() {
 		// go txHandler()
 		// Report Txs
 		fmt.Printf("\n\nTx Legend: %v %v %v\n", color.YellowString("Root"), color.GreenString("Milestone"), color.BlueString("Normal"))
-		for key, transaction := range graph.transactions {
+		for key, transaction := range graph.Transactions {
 			var hash string = fmt.Sprintf("%x", transaction.Hash)
-			var prevHash string = fmt.Sprintf("%x", transaction.PrevHash)
+			var prevHash string = fmt.Sprintf("%x", transaction.Prev)
 			// Root Tx will not have a previous hash
 			if prevHash == "" {
-				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.TxType) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_data\": \"" + string(transaction.Extra) + "\"\n}"
+				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.Type) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_data\": \"" + string(transaction.Data) + "\"\n}"
 				f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
 				w := bufio.NewWriter(f)
 				w.WriteString(dataString)
@@ -484,19 +481,19 @@ func spawnChannel() {
 				// fmt.Printf("\nTx(%x) %x\n", key, transaction.Hash)
 				fmt.Printf("\nTx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
 			} else if len(prevHash) > 2 {
-				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.TxType) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_prev\": \"" + prevHash + "\",\n\t\"tx_data\": " + string(transaction.Extra) + "\n}"
+				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.Type) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_prev\": \"" + prevHash + "\",\n\t\"tx_data\": " + string(transaction.Data) + "\n}"
 				f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
 				w := bufio.NewWriter(f)
 				w.WriteString(dataString)
 				w.Flush()
 				// Indicate Tx type by color
-				if transaction.TxType == 0 {
+				if transaction.Type == 0 {
 					// Root Tx
 					fmt.Printf("Tx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
-				} else if transaction.TxType == 1 {
+				} else if transaction.Type == 1 {
 					// Milestone Tx
 					fmt.Printf("Tx(%v) %x\n", color.GreenString(strconv.Itoa(key)), transaction.Hash)
-				} else if transaction.TxType == 2 {
+				} else if transaction.Type == 2 {
 					// Normal Tx
 					fmt.Printf("Tx(%v) %x\n", color.BlueString(strconv.Itoa(key)), transaction.Hash)
 				}
@@ -528,12 +525,12 @@ func benchmark() {
 		}
 		end := time.Since(start)
 		fmt.Printf("\n\nTx Legend: %v %v %v\n", color.YellowString("Root"), color.GreenString("Milestone"), color.BlueString("Normal"))
-		for key, transaction := range graph.transactions {
+		for key, transaction := range graph.Transactions {
 			var hash string = fmt.Sprintf("%x", transaction.Hash)
-			var prevHash string = fmt.Sprintf("%x", transaction.PrevHash)
+			var prevHash string = fmt.Sprintf("%x", transaction.Prev)
 			// Root Tx will not have a previous hash
 			if prevHash == "" {
-				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.TxType) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_data\": \"" + string(transaction.Extra) + "\"\n}"
+				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.Type) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_data\": \"" + string(transaction.Data) + "\"\n}"
 				f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
 				w := bufio.NewWriter(f)
 				w.WriteString(dataString)
@@ -541,19 +538,19 @@ func benchmark() {
 				// fmt.Printf("\nTx(%x) %x\n", key, transaction.Hash)
 				fmt.Printf("\nTx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
 			} else if len(prevHash) > 2 {
-				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.TxType) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_prev\": \"" + prevHash + "\",\n\t\"tx_data\": " + string(transaction.Extra) + "\n}"
+				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.Type) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_prev\": \"" + prevHash + "\",\n\t\"tx_data\": " + string(transaction.Data) + "\n}"
 				f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
 				w := bufio.NewWriter(f)
 				w.WriteString(dataString)
 				w.Flush()
 				// Indicate Tx type by color
-				if transaction.TxType == 0 {
+				if transaction.Type == 0 {
 					// Root Tx
 					fmt.Printf("Tx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
-				} else if transaction.TxType == 1 {
+				} else if transaction.Type == 1 {
 					// Milestone Tx
 					fmt.Printf("Tx(%v) %x\n", color.GreenString(strconv.Itoa(key)), transaction.Hash)
-				} else if transaction.TxType == 2 {
+				} else if transaction.Type == 2 {
 					// Normal Tx
 					fmt.Printf("Tx(%v) %x\n", color.BlueString(strconv.Itoa(key)), transaction.Hash)
 				}
@@ -611,10 +608,11 @@ func inputHandler() {
 		} else if strings.Compare("benchmark", text) == 0 {
 			logrus.Debug("Benchmark")
 			benchmark()
-			// } else if strings.Compare("create-peer", text) == 0 {
-			// 	menuCreatePeer()
+		} else if strings.Compare("print-graph", text) == 0 {
+			logrus.Debug("Print-graph")
+			printGraph(graphDir)
 		} else if strings.HasPrefix(text, "connect-channel") {
-			menuCreatePeer(strings.TrimPrefix(text, "connect-channel "))
+			// connectToChannel(strings.TrimPrefix(text, "connect-channel "))
 		} else if strings.Compare("exit", text) == 0 {
 			logrus.Warning("Exiting")
 			menuExit()
@@ -756,7 +754,7 @@ func printLicense() {
 func menuCreateWallet() {
 	logrus.Debug("Creating Wallet")
 	url := "http://127.0.0.1:8070/wallet/create"
-	data := []byte(`{"daemonHost": "127.0.0.1",	"daemonPort": 11898, "filename": "karai-wallet.wallet", "password": "supersecretpassword"}`)
+	data := []byte(`{"daemonHost": "127.0.0.1", "daemonPort": 11898, "filename": "karai-wallet.wallet", "password": "supersecretpassword"}`)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
 	handle("Error creating wallet: ", err)
 	req.Header.Set("Content-Type", "application/json")
@@ -777,7 +775,7 @@ func menuCreateWallet() {
 func menuOpenWallet() {
 	logrus.Debug("Opening Wallet")
 	url := "http://127.0.0.1:8070/wallet/open"
-	data := []byte(`{"daemonHost": "127.0.0.1",	"daemonPort": 11898, "filename": "karai-wallet.wallet", "password": "supersecretpassword"}`)
+	data := []byte(`{"daemonHost": "127.0.0.1", "daemonPort": 11898, "filename": "karai-wallet.wallet", "password": "supersecretpassword"}`)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
 	handle("Error opening wallet: ", err)
 	req.Header.Set("Content-Type", "application/json")
