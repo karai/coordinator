@@ -3,7 +3,7 @@ package main
 // Attribution constants
 const appName = "go-karai"
 const appDev = "The TurtleCoin Developers"
-const appDescription = appName + " is a universal blockchain scaling solution for distributed applications."
+const appDescription = appName + " is the Go implementation of the Karai network spec. Karai is a universal blockchain scaling solution for distributed applications."
 const appLicense = "https://choosealicense.com/licenses/mit/"
 const appRepository = "https://github.com/karai/go-karai"
 const appURL = "https://karai.io"

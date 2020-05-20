@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strconv"
 	"strings"
 	"time"
@@ -50,6 +49,8 @@ func printGraph(directory string) {
 	defer jsonFile.Close()
 }
 
+// createCID This will take all of the transactions in the
+// graph directory and call createCIDforTx for each file.
 func createCID() {
 	start := time.Now()
 	matches, _ := filepath.Glob(graphDir + "/*.json")
@@ -60,6 +61,8 @@ func createCID() {
 	fmt.Println("Finished in: ", end)
 }
 
+// createCIDforTx This will take a file as a parameter and
+// generate IPFS Content IDs for each file given to it.
 func createCIDforTx(file string) string {
 	dat, _ := ioutil.ReadFile(file)
 	color.Set(color.FgBlack, color.Bold)
@@ -72,6 +75,8 @@ func createCIDforTx(file string) string {
 	return cid
 }
 
+// printTv This is just your basic 'print a transaction'
+// command. It takes a file as a parameter.
 func printTx(file string) string {
 	dat, err := ioutil.ReadFile(file)
 	handle("derp, something went wrong", err)
@@ -79,6 +84,11 @@ func printTx(file string) string {
 	return datString
 }
 
+// appendGraphCID This function will take an IPFS content
+// ID as a string and append it to a file containing a list
+// of all graph TX's. This is probably not a good idea and
+// can be done a different way later when we're more coupled
+// with ipfs/libp2p
 func appendGraphCID(cid string) {
 	if !isCoordinator {
 		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
@@ -113,12 +123,6 @@ func (graph *Graph) addTx(txType int, data string) {
 		new := txConstructor(txType, data, prevTx.Hash)
 		graph.Transactions = append(graph.Transactions, new)
 	}
-}
-
-func isExist(str, filepath string) bool {
-	accused, _ := ioutil.ReadFile(filepath)
-	isExist, _ := regexp.Match(str, accused)
-	return isExist
 }
 
 // addMilestone This will add a milestone to the graph
@@ -161,17 +165,23 @@ func loadMilestoneJSON() string {
 	// Kek
 }
 
+// validateKTX This function should take a KTX string as a parameter
+// and validate that it contains a valid IP and port inside.
+// This is used as part of the channel connection process.
 func validateKTX(channel string) bool {
-	// validate the ktx string with regex
+	// TODO validate the ktx string with regex
 	// if it is valid, return bool true
 	return true
 }
 
-func clearPeerID(file string) {
-	err := os.Remove(file)
-	logrus.Debug(err)
-}
+// func clearPeerID(file string) {
+// 	err := os.Remove(file)
+// 	logrus.Debug(err)
+// }
 
+// sendClientHeader This should batch the client header information
+// and send it to the coordinator via the channel parameter. This is
+// part of the channel connection process.
 func sendClientHeader(name, version, id, channel string) bool {
 	// var clientHeaderAppName string = appName
 	// var clientHeaderAppVersion string = semverInfo()
@@ -179,6 +189,9 @@ func sendClientHeader(name, version, id, channel string) bool {
 	return true
 }
 
+// generalHash This is a test function that will probably go away
+// soon. It's just a general hash function to hash the milestone
+// data returned during the channel connection process.
 func (graphTx *GraphTx) generalHash(response string) [32]byte {
 	hashedData := bytes.Join([][]byte{graphTx.Data, graphTx.Prev}, []byte{})
 	hash := sha256.Sum256(hashedData)
@@ -286,7 +299,7 @@ func benchmark() {
 	}
 }
 
-// locateGraphDir find graph storage, create if missing.
+// locateGraphDir Find graph storage, create if missing.
 func locateGraphDir() {
 	if _, err := os.Stat(graphDir); os.IsNotExist(err) {
 		logrus.Debug("Graph directory does not exist.")

@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io/ioutil"
 	"os"
+	"regexp"
 
 	"github.com/fatih/color"
 	externalip "github.com/glendc/go-external-ip"
@@ -43,6 +45,13 @@ func printLicense() {
 // Print the version string for the user
 func menuVersion() {
 	fmt.Println(appName + " - v" + semverInfo())
+}
+
+// isExist This is a utility to see if a file exists.
+func isExist(str, filepath string) bool {
+	accused, _ := ioutil.ReadFile(filepath)
+	isExist, _ := regexp.Match(str, accused)
+	return isExist
 }
 
 // Exit the program
