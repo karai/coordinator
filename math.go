@@ -18,7 +18,7 @@ import (
 	rashedMnemonic "github.com/turtlecoin/go-turtlecoin/walletbackend/mnemonics"
 )
 
-// checkCreds locate or create Karai credentials
+// checkCreds Locate or create Karai credentials
 func checkCreds() {
 	if _, err := os.Stat(credentialsFile); err == nil {
 		logrus.Debug("Karai Credentials Found!")
@@ -28,7 +28,8 @@ func checkCreds() {
 	}
 }
 
-// generateEd25519 use TRTL Crypto to generate credentials
+// generateEd25519 Use TRTL Crypto to generate credentials
+// TODO: Replace manually entered JSON
 func generateEd25519() {
 	logrus.Debug("Generating credentials")
 	priv, pub, err := rashedCrypto.GenerateKeys()
@@ -47,7 +48,7 @@ func generateEd25519() {
 	logrus.Debug(errWriteBackupFile)
 }
 
-// v4ToHex convert an ip4 to hex
+// v4ToHex Convert an ip4 to hex
 func v4ToHex(addr string) string {
 	ip := net.ParseIP(addr).To4()
 	buffer := new(bytes.Buffer)
@@ -59,7 +60,7 @@ func v4ToHex(addr string) string {
 	return fmt.Sprintf("%08x", dec)
 }
 
-// portToHex convert a port to hex
+// portToHex Convert a port to hex
 func portToHex(port string) string {
 	portNum, _ := strconv.ParseUint(port, 10, 16)
 	return fmt.Sprintf("%04x", portNum)
