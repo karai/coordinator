@@ -12,6 +12,8 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// revealIP This uses some funky consensus methods to
+// dial a few servers and get the external IP of the coordinator
 func revealIP() string {
 	// consensus := externalip.
 	consensus := externalip.DefaultConsensus(nil, nil)
@@ -21,7 +23,8 @@ func revealIP() string {
 	return ip.String()
 }
 
-// Splash logo
+// ascii Splash logo. We used to have a package for this
+// but it was only for the logo so why not just static-print it?
 func ascii() {
 	fmt.Printf("\n")
 	color.Set(color.FgGreen, color.Bold)
@@ -29,7 +32,7 @@ func ascii() {
 	fmt.Printf("|( (_| |  (_| |\n")
 }
 
-// Print the license for the user
+// printLicense Print the license for the user
 func printLicense() {
 	fmt.Printf(color.GreenString("\n"+appName+" v"+semverInfo()) + color.WhiteString(" by "+appDev))
 	color.Set(color.FgGreen)
@@ -42,7 +45,7 @@ func printLicense() {
 	fmt.Println()
 }
 
-// Print the version string for the user
+// menuVersion Print the version string for the user
 func menuVersion() {
 	fmt.Println(appName + " - v" + semverInfo())
 }
@@ -54,17 +57,20 @@ func isExist(str, filepath string) bool {
 	return isExist
 }
 
-// Exit the program
+// menuExit Exit the program
 func menuExit() {
 	os.Exit(0)
 }
 
+// handle Ye Olde Error Handler takes a message and an error code
 func handle(msg string, err error) {
 	if err != nil {
 		logrus.Error(msg, err)
 	}
 }
 
+// parseFlags This evaluates the flags used when the program was run
+// and assigns the values of those flags according to sane defaults.
 func parseFlags() {
 	flag.IntVar(&karaiPort, "port", 4200, "Port to run Karai Coordinator on.")
 	flag.BoolVar(&isCoordinator, "coordinator", false, "Run as coordinator.")
@@ -72,6 +78,7 @@ func parseFlags() {
 	flag.Parse()
 }
 
+// announce Tell us when the program is running
 func announce() {
 	if isCoordinator {
 		logrus.Info("Coordinator: ", isCoordinator)

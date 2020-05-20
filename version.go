@@ -1,6 +1,6 @@
 package main
 
-// Version string
+// semverInfo Version string constructor
 func semverInfo() string {
 	var majorSemver, minorSemver, patchSemver, wholeString string
 	majorSemver = "0"
