@@ -10,7 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-// Create a wallet in the wallet-api container
+// menuCreateWallet Create a wallet in the wallet-api container
 func menuCreateWallet() {
 	logrus.Debug("Creating Wallet")
 	url := "http://127.0.0.1:8070/wallet/create"
@@ -31,7 +31,7 @@ func menuCreateWallet() {
 	fmt.Printf("%s\n", body)
 }
 
-// Open a wallet file
+// menuOpenWallet Open a wallet file
 func menuOpenWallet() {
 	logrus.Debug("Opening Wallet")
 	url := "http://127.0.0.1:8070/wallet/open"
@@ -52,14 +52,14 @@ func menuOpenWallet() {
 	fmt.Printf("%s\n", body)
 }
 
-// Some basic TRTL API stats
+// menuOpenWalletInfo Some basic TRTL API stats
 func menuOpenWalletInfo() {
 	walletInfoPrimaryAddressBalance()
 	getNodeInfo()
 	getWalletAPIStatus()
 }
 
-// Get Wallet-API transactions
+// menuGetContainerTransactions Get Wallet-API transactions
 func menuGetContainerTransactions() {
 	req, err := http.NewRequest("GET", "http://127.0.0.1:8070/transactions", nil)
 	handle("Error getting container transactions: ", err)
@@ -73,7 +73,7 @@ func menuGetContainerTransactions() {
 	fmt.Printf("%s\n", body)
 }
 
-// Get Wallet-API status
+// getWalletAPIStatus Get Wallet-API status
 func getWalletAPIStatus() {
 	logrus.Info("[Wallet-API Status]")
 	req, err := http.NewRequest("GET", "http://127.0.0.1:8070/status", nil)
@@ -88,7 +88,7 @@ func getWalletAPIStatus() {
 	fmt.Printf("%s\n", body)
 }
 
-// Get TRTL Node Info
+// getNodeInfo Get TRTL Node Info
 func getNodeInfo() {
 	logrus.Info("[Node Info]")
 	req, err := http.NewRequest("GET", "http://127.0.0.1:8070/node", nil)
@@ -103,7 +103,7 @@ func getNodeInfo() {
 	fmt.Printf("%s\n", body)
 }
 
-// Get primary TRTL address balance
+// walletInfoPrimaryAddressBalance Get primary TRTL address balance
 func walletInfoPrimaryAddressBalance() {
 	logrus.Info("[Primary Address]")
 	req, err := http.NewRequest("GET", "http://127.0.0.1:8070/balances", nil)

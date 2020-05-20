@@ -21,7 +21,7 @@ main
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
-
+news.json
 # Place the notes that are not worth being issues in here
 ./notes/*
 ./notes
