@@ -1,6 +1,6 @@
 ![karai_github_banner](https://user-images.githubusercontent.com/34389545/80034381-f6a14d00-84b3-11ea-857a-638322dac890.png)
 
-[![Discord](https://img.shields.io/discord/388915017187328002?label=Join%20Discord)](http://chat.turtlecoin.lol) [![GitHub issues](https://img.shields.io/github/issues/karai/go-karai?label=Issues)](https://github.com/karai/go-karai/issues) ![GitHub stars](https://img.shields.io/github/stars/karai/go-karai?label=Github%20Stars) ![Build](https://github.com/karai/go-karai/workflows/Build/badge.svg) ![GitHub](https://img.shields.io/github/license/karai/go-karai) ![GitHub issues by-label](https://img.shields.io/github/issues/karai/go-karai/Todo)
+[![Discord](https://img.shields.io/discord/388915017187328002?label=Join%20Discord)](http://chat.turtlecoin.lol) [![GitHub issues](https://img.shields.io/github/issues/karai/go-karai?label=Issues)](https://github.com/karai/go-karai/issues) ![GitHub stars](https://img.shields.io/github/stars/karai/go-karai?label=Github%20Stars) ![Build](https://github.com/karai/go-karai/workflows/Build/badge.svg) ![GitHub](https://img.shields.io/github/license/karai/go-karai) ![GitHub issues by-label](https://img.shields.io/github/issues/karai/go-karai/Todo) [![Go Report Card](https://goreportcard.com/badge/github.com/karai/go-karai)](https://goreportcard.com/report/github.com/karai/go-karai)
 
 **Tech:** [📝 WHITEPAPER.md](https://github.com/karai/go-karai/blob/master/docs/WHITEPAPER.md) **Browse:** [💻 Karai Pointer Explorer](https://karaiexplorer.extrahash.org/) **Read:** [🔗 Official Karai Blog](https://karai.io)
 
@@ -40,21 +40,13 @@ Karai is made in Linux. Other operating systems work but may produce subtle visu
 
 Note: These build instructions should run on any OS. Some Windows users will need to [modify the libp2p init line](https://superuser.com/questions/223104/setting-and-using-variable-within-same-command-line-in-windows-cmd-exe) to properly use inline environment variables
 
-```
+```bash
 git clone https://github.com/karai/go-karai
 
 cd go-karai
 
 go mod init github.com/karai/go-karai
-```
 
-```
-// This line may need to be modified for Windows
-
-GOPRIVATE='github.com/libp2p/*' go get ./...
-```
-
-```
 go build && ./go-karai
 ```
 
