@@ -40,21 +40,13 @@ Karai is made in Linux. Other operating systems work but may produce subtle visu
 
 Note: These build instructions should run on any OS. Some Windows users will need to [modify the libp2p init line](https://superuser.com/questions/223104/setting-and-using-variable-within-same-command-line-in-windows-cmd-exe) to properly use inline environment variables
 
-```
+```bash
 git clone https://github.com/karai/go-karai
 
 cd go-karai
 
 go mod init github.com/karai/go-karai
-```
 
-```
-// This line may need to be modified for Windows
-
-GOPRIVATE='github.com/libp2p/*' go get ./...
-```
-
-```
 go build && ./go-karai
 ```
 
