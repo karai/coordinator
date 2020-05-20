@@ -1,8 +1,6 @@
 package main
 
 import (
-	"net/http"
-
 	"github.com/sirupsen/logrus"
 )
 
@@ -20,8 +18,4 @@ func main() {
 		go restAPI()
 	}
 	inputHandler()
-}
-
-func sendTransaction(w http.ResponseWriter, r *http.Request) {
-
 }
