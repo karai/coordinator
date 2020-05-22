@@ -97,7 +97,7 @@ func appendGraphCID(cid string) {
 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 		handle("Something went wrong appending the graph CID: ", err)
 		defer hashfile.Close()
-		if isExist(cid, hashDat) {
+		if fileContainsString(cid, hashDat) {
 			fmt.Printf("%v", color.RedString("\nDuplicate! Skipping...\n"))
 		} else {
 			hashfile.WriteString(cid + "\n")
