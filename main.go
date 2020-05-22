@@ -8,7 +8,7 @@ import (
 func main() {
 	parseFlags()
 	announce()
-	// clearPeerID(configPeerIDFile)
+	checkPeerFile()
 	locateGraphDir()
 	checkCreds()
 	ascii()

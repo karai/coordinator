@@ -13,10 +13,21 @@ import (
 	"strings"
 	"time"
 
+	"github.com/denisbrodbeck/machineid"
 	"github.com/sirupsen/logrus"
 	rashedCrypto "github.com/turtlecoin/go-turtlecoin/crypto"
 	rashedMnemonic "github.com/turtlecoin/go-turtlecoin/walletbackend/mnemonics"
 )
+
+// generatePeerIO uses the machine ID to generate a unique string
+func generatePeerID() string {
+	logrus.Info("generating peer ID")
+	machineID, err := machineid.ProtectedID("1f41d1f36f1f5251f32cfe0f1f924")
+	handle("There was a problem generating machine ID: ", err)
+	fmt.Println(machineID)
+	writeFile(configPeerIDFile, machineID)
+	return machineID
+}
 
 // checkCreds Locate or create Karai credentials
 func checkCreds() {
