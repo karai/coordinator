@@ -34,6 +34,15 @@ func restAPI() {
 	logrus.Error(http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
 }
 
+// initAPI Check if we are running as a coordinator, if we are, start the API
+func initAPI() {
+	if !isCoordinator {
+		logrus.Debug("isCoordinator == false, skipping webserver deployment")
+	} else {
+		go restAPI()
+	}
+}
+
 // home This is the home route, it can be used as a
 // health check to see if a coordinator is responding.
 func home(w http.ResponseWriter, r *http.Request) {

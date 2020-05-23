@@ -142,7 +142,6 @@ func txConstructor(txType int, data string, prevHash []byte) *GraphTx {
 	transaction := &GraphTx{txType, []byte{}, []byte(data), prevHash}
 	transaction.hashTx()
 	return transaction
-
 }
 
 // rootTx Transaction channels start with a rootTx transaction always
@@ -173,11 +172,6 @@ func validateKTX(channel string) bool {
 	// if it is valid, return bool true
 	return true
 }
-
-// func clearPeerID(file string) {
-// 	err := os.Remove(file)
-// 	logrus.Debug(err)
-// }
 
 // sendClientHeader This should batch the client header information
 // and send it to the coordinator via the channel parameter. This is

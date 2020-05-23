@@ -1,7 +1,6 @@
 package main
 
 import (
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -51,6 +50,7 @@ func menuVersion() {
 	fmt.Println(appName + " - v" + semverInfo())
 }
 
+// fileExists Does this file exist?
 func fileExists(filename string) bool {
 	referencedFile, err := os.Stat(filename)
 	if os.IsNotExist(err) {
@@ -59,6 +59,7 @@ func fileExists(filename string) bool {
 	return !referencedFile.IsDir()
 }
 
+// directoryMissing Check if a directory has been abducted
 func directoryMissing(dirName string) bool {
 	src, err := os.Stat(dirName)
 	if os.IsNotExist(err) {
@@ -87,6 +88,9 @@ func menuExit() {
 	os.Exit(0)
 }
 
+// checkPeerFile Check if p2p directory exists, if it does then check for a
+// peer file, if it is not there we generate one, then we open it and see if
+// it conforms to what we expect, if it does then announce the peer identity.
 func checkPeerFile() {
 	// logrus.Info("Checking peer file: " + p2pConfigDir + "/" + p2pConfigFile)
 	if !directoryMissing(p2pConfigDir) {
@@ -110,28 +114,6 @@ func checkPeerFile() {
 	} else if directoryMissing(p2pConfigDir) {
 		fmt.Println("Directory " + p2pConfigDir + " does not exist.")
 	}
-
-	// if fileExists(configPeerIDFile) {
-	// 	fmt.Println("exists.")
-	// 	peerFile, err := ioutil.ReadFile(configPeerIDFile)
-	// 	handle("There was a problem reading the peer file: ", err)
-	// 	if len(peerFile) > 7 {
-	// 		logrus.Info("Peer Identity: ", peerFile)
-	// 	} else if !fileExists(configPeerIDFile) {
-	// 		fmt.Println("Doesnt Exist.")
-	// 		// if we have no peer id in the file or a malformed peer ID,
-	// 		// we should generate a new one.
-	// 		_, err := os.Stat(p2pConfigDir)
-	// 		if os.IsNotExist(err) {
-	// 			errDir := os.MkdirAll(p2pConfigDir, 0755)
-	// 			if errDir != nil {
-	// 				handle("Something went wrong creating the P2P directory: ", err)
-	// 			}
-	// 		}
-	// 		logrus.Warning("Peer Identity is not present. Generating new...")
-	// 		generatePeerID()
-	// 	}
-	// }
 }
 
 // handle Ye Olde Error Handler takes a message and an error code
@@ -139,15 +121,6 @@ func handle(msg string, err error) {
 	if err != nil {
 		logrus.Error(msg, err)
 	}
-}
-
-// parseFlags This evaluates the flags used when the program was run
-// and assigns the values of those flags according to sane defaults.
-func parseFlags() {
-	flag.IntVar(&karaiPort, "port", 4200, "Port to run Karai Coordinator on.")
-	flag.BoolVar(&isCoordinator, "coordinator", false, "Run as coordinator.")
-	// flag.StringVar(&karaiPort, "karaiPort", "4200", "Port to run Karai")
-	flag.Parse()
 }
 
 // announce Tell us when the program is running
