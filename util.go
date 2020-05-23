@@ -185,3 +185,12 @@ func deleteFile(filename string) {
 
 	logrus.Debug("Deleted file: ", filename)
 }
+
+// locateGraphDir Find graph storage, create if missing.
+func locateGraphDir() {
+	if _, err := os.Stat(graphDir); os.IsNotExist(err) {
+		logrus.Debug("Graph directory does not exist.")
+		err = os.MkdirAll("./graph", 0755)
+		handle("Error locating graph directory: ", err)
+	}
+}
