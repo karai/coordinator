@@ -21,6 +21,7 @@ const configPeerIDFile = p2pConfigDir + "/" + p2pConfigFile
 var isCoordinator bool = false
 var karaiPort int
 var p2pPeerID string
+var sslDomain = "example.com"
 
 // Client Header
 var clientHeaderAppName string = appName
