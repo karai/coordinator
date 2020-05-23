@@ -7,12 +7,21 @@ import (
 	"path/filepath"
 	"strconv"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
 // restAPI() This is the main API that is activated when isCoord == true
 func restAPI() {
+	headersCORS := handlers.AllowedHeaders([]string{"Access-Control-Allow-Headers", "Access-Control-Allow-Methods", "Access-Control-Allow-Origin", "Cache-Control", "Content-Security-Policy", "Feature-Policy", "Referrer-Policy", "X-Requested-With"})
+
+	originsCORS := handlers.AllowedOrigins([]string{
+		"*",
+		"127.0.0.1"})
+
+	methodsCORS := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+
 	r := mux.NewRouter()
 	api := r.PathPrefix("/api/v1").Subrouter()
 	api.HandleFunc("/", home).Methods(http.MethodGet)
@@ -20,7 +29,7 @@ func restAPI() {
 	api.HandleFunc("/version", returnVersion).Methods(http.MethodGet)
 	api.HandleFunc("/transactions", returnTransactions).Methods(http.MethodGet)
 	api.HandleFunc("/transaction/send", transactionHandler).Methods(http.MethodPost)
-	logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiPort), r))
+	logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
 }
 
 // home This is the home route, it can be used as a
