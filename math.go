@@ -35,13 +35,13 @@ func checkCreds() {
 		logrus.Debug("Karai Credentials Found!")
 	} else {
 		logrus.Debug("No Credentials Found! Generating Credentials...")
-		generateEd25519()
+		rashed25519()
 	}
 }
 
-// generateEd25519 Use TRTL Crypto to generate credentials
+// rashed25519 Use TRTL Crypto to generate credentials
 // TODO: Replace manually entered JSON
-func generateEd25519() {
+func rashed25519() {
 	logrus.Debug("Generating credentials")
 	priv, pub, err := rashedCrypto.GenerateKeys()
 	seed := rashedMnemonic.PrivateKeyToMnemonic(priv)
