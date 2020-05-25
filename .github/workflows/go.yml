@@ -21,7 +21,7 @@ jobs:
             - name: Build
               run: |
                   mkdir bin
-                  GOPRIVATE='github.com/libp2p/*' go get -v -t -d ./...
+                  go get -v -t -d ./...
                   go build -gcflags="-e" -o bin
             - name: Prepare To Deploy
               id: before_deploy
