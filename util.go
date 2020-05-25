@@ -99,8 +99,8 @@ func checkPeerFile() {
 			// logrus.Info(configPeerIDFile + " exists")
 			peerIdentity := readFile(configPeerIDFile)
 			if len(peerIdentity) > 16 {
-				logrus.Debug("Peer identity looks ok")
-				logrus.Info("Peer identity: " + peerIdentity)
+				logrus.Debug("Machine identity looks ok")
+				logrus.Info("Machine Identity: " + peerIdentity)
 				// TODO ADD MORE VALIDATION
 			} else if len(peerIdentity) < 16 {
 				deleteFile(configPeerIDFile)

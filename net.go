@@ -29,7 +29,8 @@ func p2pDialer(ip, port, message string, pubKey []byte) {
 func p2pListener() {
 	// Listen on TCP karaiport on all available unicast and
 	// anycast IP addresses of the local system.
-	listen, err := net.Listen("tcp", ":"+string(karaiP2PPort))
+	listen, err := net.Listen("tcp", ":4201")
+	// listen, err := net.Listen("tcp", ":"+string(karaiP2PPort))
 	handle("Something went wrong creating a listener: ", err)
 	defer listen.Close()
 	for {

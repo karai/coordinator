@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"fmt"
 
+	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/ed25519"
 )
 
@@ -16,12 +17,16 @@ var signedPubKey []byte
 func generateEd25519() {
 	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
 	handle("Something went wrong generating a key: ", err)
-	trimmedPrivate := privKey[:32]
+	shortPrivKey := privKey[:32]
+	logrus.Info("P2P Public Key: ")
+	fmt.Printf("%x\n", pubKey)
+	logrus.Info("P2P Private Key: ")
+	fmt.Printf("%x\n", privKey)
+	logrus.Info("P2P Short Private Key: ")
+	fmt.Printf("%x\n", shortPrivKey)
 	if isCoordinator == true {
 		signedMsg := ed25519.Sign(privKey, pubKey)
-		fmt.Printf("\nmsg: %x\n", signedMsg)
+		logrus.Info("P2P Signed Message: ")
+		fmt.Printf("%x\n", signedMsg)
 	}
-	fmt.Printf("\npubkey: %x\n", pubKey)
-	fmt.Printf("\nprivkey: %x\n", privKey)
-	fmt.Printf("\ntprivkey: %x\n", trimmedPrivate)
 }
