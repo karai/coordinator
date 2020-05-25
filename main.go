@@ -10,6 +10,7 @@ func main() {
 	checkCreds()
 	ascii()
 	initAPI()
+	initConnection()
 	go p2pListener()
 	inputHandler()
 }

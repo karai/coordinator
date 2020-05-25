@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"time"
 
@@ -44,7 +45,25 @@ func p2pListener() {
 	}
 }
 
-func initConnection(ip, port string, pubKey []byte) {
+func dialerTest() {
+	var d net.Dialer
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	conn, err := d.DialContext(ctx, "tcp", "zeus.karai.io:4201")
+	if err != nil {
+		log.Fatalf("Failed to dial: %v", err)
+	}
+	defer conn.Close()
+
+	if _, err := conn.Write([]byte("Hello, World!")); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func initConnection() {
 	joinMessage := "JOIN"
-	p2pDialer(ip, port, joinMessage, pubKey)
+	joinAddress := "zeus.karai.io"
+	joinAddressPort := "4201"
+	p2pDialer(joinAddress, joinAddressPort, joinMessage, pubKey)
 }

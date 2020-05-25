@@ -30,6 +30,9 @@ func ascii() {
 	color.Set(color.FgGreen, color.Bold)
 	fmt.Printf("|   _   _  _  .\n")
 	fmt.Printf("|( (_| |  (_| |\n")
+	color.Set(color.FgHiRed, color.Bold)
+	fmt.Println(semverInfo())
+
 }
 
 // printLicense Print the license for the user
