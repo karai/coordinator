@@ -129,9 +129,9 @@ func announce() {
 		logrus.Info("Coordinator: ", isCoordinator)
 		revealIP()
 
-		logrus.Info("Running on port: ", karaiPort)
+		logrus.Info("Running on port: ", karaiAPIPort)
 	} else {
-		logrus.Debug("launching as normal user on port: ", karaiPort)
+		logrus.Debug("launching as normal user on port: ", karaiAPIPort)
 	}
 }
 
