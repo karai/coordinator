@@ -44,7 +44,6 @@ func printLicense() {
 	fmt.Printf(color.GreenString("\n"+appName+" v"+semverInfo()) + color.WhiteString(" by "+appDev))
 	color.Set(color.FgGreen)
 	fmt.Println("\n" + appRepository + "\n" + appURL + "\n")
-
 	color.Set(color.FgHiWhite)
 	fmt.Println("\nMIT License\nCopyright (c) 2020-2021 RockSteady, TurtleCoin Developers")
 	color.Set(color.FgHiBlack)
@@ -135,7 +134,6 @@ func announce() {
 	if isCoordinator {
 		logrus.Info("Coordinator: ", isCoordinator)
 		revealIP()
-
 		logrus.Info("Running on port: ", karaiAPIPort)
 	} else {
 		logrus.Debug("launching as normal user on port: ", karaiAPIPort)

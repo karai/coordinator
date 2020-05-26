@@ -64,7 +64,7 @@ func handleConnection(conn net.Conn) {
 	message := string(bufferBytes)
 	clientAddr := conn.RemoteAddr().String()
 	response := fmt.Sprintf(message + " from " + clientAddr + "\n")
-	log.Println(response)
+	fmt.Println(response)
 	conn.Write([]byte("Sent: " + response))
 	handleConnection(conn)
 }
