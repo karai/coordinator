@@ -4,10 +4,9 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"log"
 	"net"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 func p2pDialer(ip, port, message string, pubKey []byte) {
@@ -22,7 +21,7 @@ func p2pDialer(ip, port, message string, pubKey []byte) {
 	// will be made for every time dialer is called.
 	fmt.Fprintf(connection, message)
 	status, err := bufio.NewReader(connection).ReadString('\n')
-	logrus.Info("Status: ", status)
+	fmt.Println(status)
 }
 
 func p2pListener() {
@@ -32,14 +31,7 @@ func p2pListener() {
 	for {
 		listenerConnection, err := listen.Accept()
 		handle("Something went wrong accepting a connection: ", err)
-
-		// go func(connection net.Conn) {
-		// 	fmt.Println("Got a connection!")
-		// 	io.Copy(connection, connection)
-		// 	connection.Close()
-		// }(listenerConnection)
-		go handleRequest(listenerConnection)
-
+		go handleConnection(listenerConnection)
 	}
 }
 
@@ -50,13 +42,29 @@ func initConnection() {
 	p2pDialer(joinAddress, joinAddressPort, joinMessage, pubKey)
 }
 
-func handleRequest(conn net.Conn) {
-	buf := make([]byte, 1024)
-	readBuffer, err := conn.Read(buf)
+// func handleRequest(conn net.Conn) {
+// 	buf := make([]byte, 1024)
+// 	readBuffer, err := conn.Read(buf)
+// 	if err != nil {
+// 		fmt.Println("Error reading:", err.Error())
+// 	}
+// 	fmt.Println(readBuffer)
+// 	ackstring := "Message received." + string(signedPubKey)
+// 	conn.Write([]byte(ackstring))
+// 	conn.Close()
+// }
+
+func handleConnection(conn net.Conn) {
+	bufferBytes, err := bufio.NewReader(conn).ReadBytes('\n')
 	if err != nil {
-		fmt.Println("Error reading:", err.Error())
+		log.Println("client left..")
+		conn.Close()
+		return
 	}
-	fmt.Println(readBuffer)
-	conn.Write([]byte("Message received." + string(signedPubKey)))
-	conn.Close()
+	message := string(bufferBytes)
+	clientAddr := conn.RemoteAddr().String()
+	response := fmt.Sprintf(message + " from " + clientAddr + "\n")
+	log.Println(response)
+	conn.Write([]byte("Sent: " + response))
+	handleConnection(conn)
 }

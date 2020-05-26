@@ -27,12 +27,16 @@ func revealIP() string {
 // but it was only for the logo so why not just static-print it?
 func ascii() {
 	fmt.Printf("\n")
-	color.Set(color.FgGreen, color.Bold)
+	if isCoordinator {
+		color.Set(color.FgRed, color.Bold)
+	}
+	if !isCoordinator {
+		color.Set(color.FgCyan, color.Bold)
+	}
 	fmt.Printf("|   _   _  _  .\n")
 	fmt.Printf("|( (_| |  (_| |\n")
 	color.Set(color.FgHiRed, color.Bold)
 	fmt.Println(semverInfo())
-
 }
 
 // printLicense Print the license for the user
