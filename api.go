@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
@@ -30,8 +31,12 @@ func restAPI() {
 	api.HandleFunc("/transactions", returnTransactions).Methods(http.MethodGet)
 	api.HandleFunc("/transaction/send", transactionHandler).Methods(http.MethodPost)
 	// logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiPort), r))
-	// logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
-	logrus.Error(http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
+	if !wantsHTTPS {
+		logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
+	}
+	if wantsHTTPS {
+		logrus.Error(http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
+	}
 }
 
 // initAPI Check if we are running as a coordinator, if we are, start the API
