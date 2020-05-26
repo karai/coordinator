@@ -19,7 +19,9 @@ func revealIP() string {
 	consensus := externalip.DefaultConsensus(nil, nil)
 	ip, err := consensus.ExternalIP()
 	handle("Something went wrong getting the external IP: ", err)
-	logrus.Info("External IP: ", ip.String())
+	if showIP {
+		logrus.Info("External IP: ", ip.String())
+	}
 	return ip.String()
 }
 
