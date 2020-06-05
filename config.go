@@ -26,6 +26,9 @@ var karaiP2PPort int
 var p2pPeerID string
 var sslDomain = "example.com"
 
+// Client Values
+var signedKey []byte
+
 // Client Header
 var clientHeaderAppName string = appName
 var clientHeaderAppVersion string = semverInfo()

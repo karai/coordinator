@@ -1,6 +1,8 @@
 package main
 
 import (
+	"bytes"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -9,20 +11,25 @@ import (
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
+	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/acme/autocert"
 )
 
+var upgrader = websocket.Upgrader{
+	EnableCompression: true,
+	ReadBufferSize:    1024,
+	WriteBufferSize:   1024,
+}
+var joinmessage []byte = []byte("JOIN")
+
 // restAPI() This is the main API that is activated when isCoord == true
 func restAPI() {
 	headersCORS := handlers.AllowedHeaders([]string{"Access-Control-Allow-Headers", "Access-Control-Allow-Methods", "Access-Control-Allow-Origin", "Cache-Control", "Content-Security-Policy", "Feature-Policy", "Referrer-Policy", "X-Requested-With"})
-
 	originsCORS := handlers.AllowedOrigins([]string{
 		"*",
 		"127.0.0.1"})
-
 	methodsCORS := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
-
 	r := mux.NewRouter()
 	api := r.PathPrefix("/api/v1").Subrouter()
 	api.HandleFunc("/", home).Methods(http.MethodGet)
@@ -30,7 +37,23 @@ func restAPI() {
 	api.HandleFunc("/version", returnVersion).Methods(http.MethodGet)
 	api.HandleFunc("/transactions", returnTransactions).Methods(http.MethodGet)
 	api.HandleFunc("/transaction/send", transactionHandler).Methods(http.MethodPost)
-	// logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiPort), r))
+	api.HandleFunc("/join", func(w http.ResponseWriter, r *http.Request) {
+		conn, _ := upgrader.Upgrade(w, r, nil)
+		for {
+			msgType, msg, err := conn.ReadMessage()
+			if bytes.Equal(msg, joinmessage) {
+
+			}
+			if err != nil {
+				return
+			}
+			fmt.Printf("%s: %s\n", conn.RemoteAddr(), string(msg))
+			if err = conn.WriteMessage(msgType, msg); err != nil {
+				return
+			}
+		}
+	})
+
 	if !wantsHTTPS {
 		logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
 	}
