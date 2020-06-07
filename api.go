@@ -42,11 +42,9 @@ func restAPI() {
 		for {
 			msgType, msg, err := conn.ReadMessage()
 			if bytes.Equal(msg, joinmessage) {
-
+				fmt.Println("New join request: ", msg)
 			}
-			if err != nil {
-				return
-			}
+			handle("Something went wrong reading the socket: ", err)
 			fmt.Printf("%s: %s\n", conn.RemoteAddr(), string(msg))
 			if err = conn.WriteMessage(msgType, msg); err != nil {
 				return

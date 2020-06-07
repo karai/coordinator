@@ -14,7 +14,7 @@ var signedPubKey []byte
 
 // [✔️] Coord: Generates Secret Key (CA:SK)and Public Key (CA:PK)
 // [✔️] Coord: Signs CA:PK with CA:SK(CA:S)
-// [❌] Coord: Publishes CA:S & CA:PKin pointer record
+// [❌] Coord: Publishes CA:S & CA:PK in pointer record
 // [✔️] Node:  Generates Secret Key (N1:SK) and Public Key(N1:PK)
 // [ ] Node:  Initial Connection Sends N1:PK to Coord
 // [ ] Coord: Signs N1:PK with CA:SK (N1:S)
