@@ -16,7 +16,7 @@ var signedPubKey []byte
 // [✔️] Coord: Signs CA:PK with CA:SK(CA:S)
 // [❌] Coord: Publishes CA:S & CA:PK in pointer record
 // [✔️] Node:  Generates Secret Key (N1:SK) and Public Key(N1:PK)
-// [ ] Node:  Initial Connection Sends N1:PK to Coord
+// [✔️] Node:  Initial Connection Sends N1:PK to Coord
 // [ ] Coord: Signs N1:PK with CA:SK (N1:S)
 // [ ] Coord: Sends CA:N1:S to Node
 // [ ] Node:  Verifies N1:S using known CA:PK from pointer (Good Coordinator)

@@ -1,11 +1,13 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strconv"
 
 	"github.com/gorilla/handlers"
@@ -38,6 +40,7 @@ func restAPI() {
 	api.HandleFunc("/join", func(w http.ResponseWriter, r *http.Request) {
 		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 		conn, _ := upgrader.Upgrade(w, r, nil)
+		defer conn.Close()
 		logrus.Info("Client has connected!")
 		reader(conn)
 	})
@@ -55,21 +58,37 @@ func reader(conn *websocket.Conn) {
 	for {
 		msgType, msg, err := conn.ReadMessage()
 		handle("Something went wrong reading the socket: ", err)
-		fmt.Println(string(msg))
 		if err = conn.WriteMessage(msgType, msg); err != nil {
 			handle("something went wrong: ", err)
 			return
 		}
+		handleSocketCommands(msg)
+	}
+}
 
-		// 	fmt.Println("New join request: ", msg)
-		// 	if bytes.Equal(msg, joinmessage) {
-		// 		fmt.Println("New join request: ", msg)
-		// 	}
-		// 	fmt.Printf("%s: %s\n", conn.RemoteAddr(), string(msg))
-		// if err = conn.WriteMessage(msgType, msg); err != nil {
-		// 	return
-		// }
-		// }
+func handleSocketCommands(msg []byte) {
+	if bytes.HasPrefix(msg, joinmessage) {
+		trimmedPubKey := bytes.TrimLeft(msg, "JOIN ")
+		if len(trimmedPubKey) == 64 {
+			var regValidate bool
+			regValidate, _ = regexp.MatchString(`[a-f0-9]{64}`, string(trimmedPubKey))
+			if regValidate == false {
+				logrus.Error("Contains illegal characters")
+				return
+			}
+			// if bytes.ContainsAny(trimmedPubKey, "ghijklmnopqrstuvwxyz!@#$%^&*()./,\\|`[]{}") {
+			// 	logrus.Error("Contains illegal characters")
+			// 	return
+			// }
+			logrus.Info("[JOIN] PubKey Received: ", string(trimmedPubKey))
+
+		} else {
+			logrus.Error("Join PubKey has incorrect length. PubKey received has a length of ", len(trimmedPubKey))
+			return
+		}
+	}
+	if bytes.Equal(msg, joinmessage) {
+		fmt.Println("Join requested..")
 	}
 }
 
