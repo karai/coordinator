@@ -50,3 +50,10 @@ func generateEd25519() {
 	logrus.Info("P2P Signed Pubkey: ")
 	fmt.Printf("%x\n", signedKey)
 }
+
+func signNodePubKey(nodePubKey []byte) []byte {
+	signedNodePubKey := ed25519.Sign(privKey, nodePubKey)
+	logrus.Info("P2P Signed Pubkey: ")
+	// fmt.Printf("%x\n", signedNodePubKey)
+	return signedNodePubKey
+}
