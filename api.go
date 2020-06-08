@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -13,13 +12,12 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
-	"golang.org/x/crypto/acme/autocert"
 )
 
 var upgrader = websocket.Upgrader{
-	EnableCompression: true,
-	ReadBufferSize:    1024,
-	WriteBufferSize:   1024,
+	// EnableCompression: true,
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
 }
 var joinmessage []byte = []byte("JOIN")
 
@@ -38,25 +36,40 @@ func restAPI() {
 	api.HandleFunc("/transactions", returnTransactions).Methods(http.MethodGet)
 	api.HandleFunc("/transaction/send", transactionHandler).Methods(http.MethodPost)
 	api.HandleFunc("/join", func(w http.ResponseWriter, r *http.Request) {
+		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 		conn, _ := upgrader.Upgrade(w, r, nil)
-		for {
-			msgType, msg, err := conn.ReadMessage()
-			if bytes.Equal(msg, joinmessage) {
-				fmt.Println("New join request: ", msg)
-			}
-			handle("Something went wrong reading the socket: ", err)
-			fmt.Printf("%s: %s\n", conn.RemoteAddr(), string(msg))
-			if err = conn.WriteMessage(msgType, msg); err != nil {
-				return
-			}
-		}
+		logrus.Info("Client has connected!")
+		reader(conn)
 	})
 
 	if !wantsHTTPS {
 		logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
 	}
 	if wantsHTTPS {
-		logrus.Error(http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
+		logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
+		// logrus.Error(http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
+	}
+}
+
+func reader(conn *websocket.Conn) {
+	for {
+		msgType, msg, err := conn.ReadMessage()
+		handle("Something went wrong reading the socket: ", err)
+		fmt.Println(string(msg))
+		if err = conn.WriteMessage(msgType, msg); err != nil {
+			handle("something went wrong: ", err)
+			return
+		}
+
+		// 	fmt.Println("New join request: ", msg)
+		// 	if bytes.Equal(msg, joinmessage) {
+		// 		fmt.Println("New join request: ", msg)
+		// 	}
+		// 	fmt.Printf("%s: %s\n", conn.RemoteAddr(), string(msg))
+		// if err = conn.WriteMessage(msgType, msg); err != nil {
+		// 	return
+		// }
+		// }
 	}
 }
 
