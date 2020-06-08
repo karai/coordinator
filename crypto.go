@@ -21,7 +21,7 @@ var trimmedPrivKey []byte
 // [✔️] Node:  Generates Secret Key (N1:SK) and Public Key(N1:PK)
 // [✔️] Node:  Initial Connection Sends N1:PK to Coord
 // [✔️] Coord: Signs N1:PK with CA:SK (N1:S)
-// [ ] Coord: Sends CA:N1:S to Node
+// [❌] Coord: Sends CA:N1:S to Node
 // [ ] Node:  Verifies N1:S using known CA:PK from pointer (Good Coordinator)
 // [ ] Node:  Signs N1:PK with N1:SK (N1:S)
 // [ ] Node:  Sends N1:S to Coord
