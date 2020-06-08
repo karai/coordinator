@@ -14,6 +14,7 @@ var signedPubKey []byte
 var shortPrivKey []byte
 var nodePubKey ed25519.PublicKey
 var trimmedPrivKey []byte
+var trimmedPubKey []byte
 
 // [✔️] Coord: Generates Secret Key (CA:SK)and Public Key (CA:PK)
 // [✔️] Coord: Signs CA:PK with CA:SK(CA:S)
@@ -57,7 +58,7 @@ func coordSignNodePubKey(nodePubKey ed25519.PublicKey) []byte {
 	privKey = readFileBytes("priv.key")
 	trimmedPrivKey = privKey[:64]
 	fmt.Printf("Coord Private Key: %x\n", trimmedPrivKey)
-	fmt.Printf("Node Pub Key: %x\n", trimmedPubKey)
+	fmt.Printf("Node Pub Key: %x\n", []byte(nodePubKey))
 	signedNodePubKey := ed25519.Sign(trimmedPrivKey, trimmedPubKey)
 	fmt.Printf("P2P Signed Pubkey: %x\n", signedNodePubKey)
 	return signedNodePubKey

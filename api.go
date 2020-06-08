@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/ed25519"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -16,15 +15,16 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/acme/autocert"
+	"golang.org/x/crypto/ed25519"
 )
 
-var trimmedPubKey ed25519.PublicKey
 var upgrader = websocket.Upgrader{
 	// EnableCompression: true,
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
 var joinmessage []byte = []byte("JOIN")
+var nodePubKeySignature []byte
 
 // restAPI() This is the main API that is activated when isCoord == true
 func restAPI() {
@@ -45,7 +45,7 @@ func restAPI() {
 		conn, _ := upgrader.Upgrade(w, r, nil)
 		defer conn.Close()
 		logrus.Info("Client has connected!")
-		reader(conn)
+		socketHandler(conn)
 	})
 
 	if !wantsHTTPS {
@@ -56,39 +56,36 @@ func restAPI() {
 	}
 }
 
-func reader(conn *websocket.Conn) {
+func socketHandler(conn *websocket.Conn) {
 	for {
 		msgType, msg, err := conn.ReadMessage()
-		handle("Something went wrong reading the socket: ", err)
+		handle("", err)
 		if err = conn.WriteMessage(msgType, msg); err != nil {
-			handle("something went wrong: ", err)
+			handle("", err)
 			return
 		}
-		handleSocketCommands(msg)
-	}
-}
-
-func handleSocketCommands(msg []byte) {
-	if bytes.HasPrefix(msg, joinmessage) {
-		trimmedPubKey := bytes.TrimLeft(msg, "JOIN ")
-		if len(trimmedPubKey) == 64 {
-			var regValidate bool
-			regValidate, _ = regexp.MatchString(`[a-f0-9]{64}`, string(trimmedPubKey))
-			if regValidate == false {
-				logrus.Error("Contains illegal characters")
+		if bytes.HasPrefix(msg, joinmessage) {
+			trimmedPubKey := bytes.TrimLeft(msg, "JOIN ")
+			if len(trimmedPubKey) == 64 {
+				var regValidate bool
+				regValidate, _ = regexp.MatchString(`[a-f0-9]{64}`, string(trimmedPubKey))
+				if regValidate == false {
+					logrus.Error("Contains illegal characters")
+					return
+				}
+				logrus.Info("[JOIN] PubKey Received: ", string(trimmedPubKey))
+				privKey = readFileBytes("priv.key")
+				trimmedPrivKey = privKey[:64]
+				fmt.Printf("Coord Private Key: %x\n", string(trimmedPrivKey))
+				fmt.Printf("Node Pub Key: %v\n", string(trimmedPubKey))
+				signedNodePubKey := ed25519.Sign(trimmedPrivKey, trimmedPubKey)
+				fmt.Printf("P2P Signed Pubkey: %x\n", string(signedNodePubKey))
+				conn.WriteMessage(2, signedNodePubKey)
+			} else {
+				logrus.Error("Join PubKey has incorrect length. PubKey received has a length of ", len(trimmedPubKey))
 				return
 			}
-			logrus.Info("[JOIN] PubKey Received: ", string(trimmedPubKey))
-			var nodePubKeySignature []byte
-			nodePubKeySignature = coordSignNodePubKey(trimmedPubKey)
-			fmt.Printf("[JOIN] N1:PK Signed: %x\n", nodePubKeySignature)
-		} else {
-			logrus.Error("Join PubKey has incorrect length. PubKey received has a length of ", len(trimmedPubKey))
-			return
 		}
-	}
-	if bytes.Equal(msg, joinmessage) {
-		fmt.Println("Join requested..")
 	}
 }
 
