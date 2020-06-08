@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/ed25519"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -14,8 +15,10 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/acme/autocert"
 )
 
+var trimmedPubKey ed25519.PublicKey
 var upgrader = websocket.Upgrader{
 	// EnableCompression: true,
 	ReadBufferSize:  1024,
@@ -49,8 +52,7 @@ func restAPI() {
 		logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
 	}
 	if wantsHTTPS {
-		logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
-		// logrus.Error(http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
+		logrus.Error(http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
 	}
 }
 
@@ -76,15 +78,10 @@ func handleSocketCommands(msg []byte) {
 				logrus.Error("Contains illegal characters")
 				return
 			}
-			// if bytes.ContainsAny(trimmedPubKey, "ghijklmnopqrstuvwxyz!@#$%^&*()./,\\|`[]{}") {
-			// 	logrus.Error("Contains illegal characters")
-			// 	return
-			// }
 			logrus.Info("[JOIN] PubKey Received: ", string(trimmedPubKey))
 			var nodePubKeySignature []byte
-			var privKey = readFileBytes("priv.key")
-			nodePubKeySignature = coordSignNodePubKey(trimmedPubKey, privKey[:64])
-			logrus.Info("[JOIN] N1:PK Signed: ", string(nodePubKeySignature))
+			nodePubKeySignature = coordSignNodePubKey(trimmedPubKey)
+			fmt.Printf("[JOIN] N1:PK Signed: %x\n", nodePubKeySignature)
 		} else {
 			logrus.Error("Join PubKey has incorrect length. PubKey received has a length of ", len(trimmedPubKey))
 			return
