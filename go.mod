@@ -3,6 +3,7 @@ module github.com/karai/go-karai
 go 1.14
 
 require (
+	github.com/briandowns/spinner v1.11.1
 	github.com/denisbrodbeck/machineid v1.0.1
 	github.com/fatih/color v1.9.0
 	github.com/glendc/go-external-ip v0.0.0-20170425150139-139229dcdddd

@@ -6,7 +6,9 @@ import (
 	"io/ioutil"
 	"os"
 	"regexp"
+	"time"
 
+	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	externalip "github.com/glendc/go-external-ip"
 	"github.com/sirupsen/logrus"
@@ -15,13 +17,17 @@ import (
 // revealIP This uses some funky consensus methods to
 // dial a few servers and get the external IP of the coordinator
 func revealIP() string {
-	// consensus := externalip.
+	s := spinner.New(spinner.CharSets[37], 200*time.Millisecond)
+	s.Start()
+	s.Prefix = "Just a moment..  "
 	consensus := externalip.DefaultConsensus(nil, nil)
 	ip, err := consensus.ExternalIP()
 	handle("Something went wrong getting the external IP: ", err)
+	// logrus.Info("Coordinator: ", isCoordinator)
 	if showIP {
 		logrus.Info("External IP: ", ip.String())
 	}
+	s.Stop()
 	return ip.String()
 }
 
@@ -96,6 +102,11 @@ func menuExit() {
 	os.Exit(0)
 }
 
+func timeStamp() string {
+	current := time.Now()
+	return current.Format("2006-01-02 15:04:05")
+}
+
 // checkPeerFile Check if p2p directory exists, if it does then check for a
 // peer file, if it is not there we generate one, then we open it and see if
 // it conforms to what we expect, if it does then announce the peer identity.
@@ -134,7 +145,6 @@ func handle(msg string, err error) {
 // announce Tell us when the program is running
 func announce() {
 	if isCoordinator {
-		logrus.Info("Coordinator: ", isCoordinator)
 		revealIP()
 		logrus.Info("Running on port: ", karaiAPIPort)
 	} else {
