@@ -8,16 +8,17 @@ import (
 	"golang.org/x/crypto/ed25519"
 )
 
-var pubKey []byte
-var privKey []byte
+var pubKey ed25519.PublicKey
+var privKey ed25519.PrivateKey
 var signedPubKey []byte
+var shortPrivKey []byte
 
 // [✔️] Coord: Generates Secret Key (CA:SK)and Public Key (CA:PK)
 // [✔️] Coord: Signs CA:PK with CA:SK(CA:S)
 // [❌] Coord: Publishes CA:S & CA:PK in pointer record
 // [✔️] Node:  Generates Secret Key (N1:SK) and Public Key(N1:PK)
 // [✔️] Node:  Initial Connection Sends N1:PK to Coord
-// [ ] Coord: Signs N1:PK with CA:SK (N1:S)
+// [?] Coord: Signs N1:PK with CA:SK (N1:S)
 // [ ] Coord: Sends CA:N1:S to Node
 // [ ] Node:  Verifies N1:S using known CA:PK from pointer (Good Coordinator)
 // [ ] Node:  Signs N1:PK with N1:SK (N1:S)
@@ -31,29 +32,29 @@ var signedPubKey []byte
 // https://hackmd.io/@ZL2uKk4cThC4TG0z7Wu7sg/H1Ubn6d9L
 func generateEd25519() {
 	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
+	deleteFile("pub.key")
+	deleteFile("priv.key")
+	createFile("pub.key")
+	createFile("priv.key")
+	writeFileBytes("pub.key", pubKey)
+	writeFileBytes("priv.key", privKey)
 	handle("Something went wrong generating a key: ", err)
-	shortPrivKey := privKey[:32]
+	shortPrivKey = privKey[:32]
 	logrus.Info("P2P Public Key: ")
 	fmt.Printf("%x\n", pubKey)
 	logrus.Info("P2P Private Key: ")
 	fmt.Printf("%x\n", privKey)
 	logrus.Info("P2P Short Private Key: ")
 	fmt.Printf("%x\n", shortPrivKey)
-	// Nodes and coords will need this, so Im commenting the check
-	// for whether or not we are a coord
-	// if isCoordinator == true {
-	// 	signedKey := ed25519.Sign(privKey, pubKey)
-	// 	logrus.Info("P2P Signed Pubkey: ")
-	// 	fmt.Printf("%x\n", signedKey)
-	// }
 	signedKey := ed25519.Sign(privKey, pubKey)
 	logrus.Info("P2P Signed Pubkey: ")
 	fmt.Printf("%x\n", signedKey)
 }
 
-func signNodePubKey(nodePubKey []byte) []byte {
-	signedNodePubKey := ed25519.Sign(privKey, nodePubKey)
+func coordSignNodePubKey(nodePubKey ed25519.PublicKey, privKey ed25519.PrivateKey) []byte {
+	fmt.Printf("Coord Private Key: %x\n", privKey)
+	fmt.Printf("Node Pub Key: %x\n", []byte(nodePubKey))
+	signedNodePubKey := ed25519.Sign(privKey, []byte(nodePubKey))
 	logrus.Info("P2P Signed Pubkey: ")
-	// fmt.Printf("%x\n", signedNodePubKey)
 	return signedNodePubKey
 }

@@ -82,7 +82,8 @@ func handleSocketCommands(msg []byte) {
 			// }
 			logrus.Info("[JOIN] PubKey Received: ", string(trimmedPubKey))
 			var nodePubKeySignature []byte
-			nodePubKeySignature = signNodePubKey(trimmedPubKey)
+			var privKey = readFileBytes("priv.key")
+			nodePubKeySignature = coordSignNodePubKey(trimmedPubKey, privKey[:64])
 			logrus.Info("[JOIN] N1:PK Signed: ", string(nodePubKeySignature))
 		} else {
 			logrus.Error("Join PubKey has incorrect length. PubKey received has a length of ", len(trimmedPubKey))

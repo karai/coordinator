@@ -164,6 +164,17 @@ func writeFile(filename, textToWrite string) {
 	logrus.Debug("Text written to file: ", textToWrite)
 }
 
+// writeFile Generic file handler
+func writeFileBytes(filename string, bytesToWrite []byte) {
+	var file, err = os.OpenFile(filename, os.O_RDWR, 0644)
+	handle("", err)
+	defer file.Close()
+	_, err = file.Write(bytesToWrite)
+	err = file.Sync()
+	handle("", err)
+	logrus.Debug("Text written to file: ", bytesToWrite)
+}
+
 // readFile Generic file handler
 func readFile(filename string) string {
 	var file, err = os.OpenFile(filename, os.O_RDWR, 0644)
@@ -185,11 +196,30 @@ func readFile(filename string) string {
 	return string(text)
 }
 
+func readFileBytes(filename string) []byte {
+	var file, err = os.OpenFile(filename, os.O_RDWR, 0644)
+	handle("", err)
+	defer file.Close()
+	var text = make([]byte, 1024)
+	for {
+		_, err = file.Read(text)
+		if err == io.EOF {
+			break
+		}
+		if err != nil && err != io.EOF {
+			handle("", err)
+			break
+		}
+	}
+	logrus.Debug("Read from file: ", text)
+	// fmt.Println(string(text))
+	return text
+}
+
 // deleteFile Generic file handler
 func deleteFile(filename string) {
 	var err = os.Remove(filename)
 	handle("", err)
-
 	logrus.Debug("Deleted file: ", filename)
 }
 
