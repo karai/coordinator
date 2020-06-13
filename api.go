@@ -44,7 +44,7 @@ func restAPI() {
 		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 		conn, _ := upgrader.Upgrade(w, r, nil)
 		defer conn.Close()
-		fmt.Printf("\n[%s] Peer Connected!\n", timeStamp())
+		fmt.Printf("\n[%s] Peer socket opened!\n", timeStamp())
 		socketHandler(conn)
 	})
 
@@ -60,10 +60,8 @@ func socketHandler(conn *websocket.Conn) {
 	for {
 		msgType, msg, err := conn.ReadMessage()
 		handle("", err)
-		if err = conn.WriteMessage(msgType, msg); err != nil {
-			logrus.Warning(err)
-			return
-		}
+		err = conn.WriteMessage(msgType, msg)
+		handle("", err)
 		if bytes.HasPrefix(msg, joinmessage) {
 			trimmedPubKey := bytes.TrimLeft(msg, "JOIN ")
 			if len(trimmedPubKey) == 64 {
@@ -73,17 +71,15 @@ func socketHandler(conn *websocket.Conn) {
 					logrus.Error("Contains illegal characters")
 					return
 				}
-				fmt.Printf("\n- Node Pub Key Received: %x\n", string(trimmedPubKey))
+				fmt.Printf("\n- Node Pub Key Received: %v\n", string(trimmedPubKey))
 				privKey = readFileBytes("priv.key")
 				trimmedPrivKey = privKey[:64]
 				fmt.Printf("- Coord Private Key: %x\n", string(trimmedPrivKey))
 				fmt.Printf("- Node Pub Key: %v\n", string(trimmedPubKey))
 				signedNodePubKey := ed25519.Sign(trimmedPrivKey, trimmedPubKey)
 				fmt.Printf("- P2P Signed Pubkey: %x\n", string(signedNodePubKey))
-				if err = conn.WriteMessage(2, signedNodePubKey); err != nil {
-					handle("", err)
-					return
-				}
+				err = conn.WriteMessage(2, signedNodePubKey)
+				handle("", err)
 				if !fileExists(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey") {
 					createFile(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey")
 					writeFileBytes(p2pConfigDir+"/"+string(trimmedPubKey)+".pubkey", signedNodePubKey)

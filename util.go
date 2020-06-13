@@ -174,7 +174,7 @@ func writeFile(filename, textToWrite string) {
 	logrus.Debug("Text written to file: ", textToWrite)
 }
 
-// writeFile Generic file handler
+// writeFileBytes Generic file handler
 func writeFileBytes(filename string, bytesToWrite []byte) {
 	var file, err = os.OpenFile(filename, os.O_RDWR, 0644)
 	handle("", err)
