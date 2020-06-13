@@ -2,23 +2,33 @@
 
 [![Discord](https://img.shields.io/discord/388915017187328002?label=Join%20Discord)](http://chat.turtlecoin.lol) [![GitHub issues](https://img.shields.io/github/issues/karai/go-karai?label=Issues)](https://github.com/karai/go-karai/issues) ![GitHub stars](https://img.shields.io/github/stars/karai/go-karai?label=Github%20Stars) ![Build](https://github.com/karai/go-karai/workflows/Build/badge.svg) ![GitHub](https://img.shields.io/github/license/karai/go-karai) ![GitHub issues by-label](https://img.shields.io/github/issues/karai/go-karai/Todo) [![Go Report Card](https://goreportcard.com/badge/github.com/karai/go-karai)](https://goreportcard.com/report/github.com/karai/go-karai)
 
-**Tech:** [📝 WHITEPAPER.md](https://github.com/karai/go-karai/blob/master/docs/WHITEPAPER.md) **Browse:** [💻 Karai Pointer Explorer](https://karaiexplorer.extrahash.org/) **Read:** [🔗 Official Karai Blog](https://karai.io)
+**Website:** [📝 karai.io](https://karai.io)  **Browse:** [💻 Karai Pointer Explorer](https://karaiexplorer.extrahash.org/)  **Read:** [🔗 Official Karai Blog](https://karai.io)
 
 ## Usage
+>Note: Karai aims to always compile and run on **Linux** targetting the **AMD64** CPU architecture. Other operating systems and architectures may compile and run this software but should do so expecting some inconsistencies.
 
-**Launch Karai in Linux & MacOS**
-
+**Launch Karai**
 ```
-./go-karai
-```
-
-**Launch Karai in Windows**
-
-```
-go-karai.exe
+./go-karai --coordinator --https --showip
 ```
 
-Type `menu` to view a list of functions. Functions that are darkened are disabled.
+**Launch Options**
+```
+--coordinator
+```
+This will launch the go-karai client in Coordinator mode. This is needed for some functions. 
+
+```
+--https
+```
+Use https with Coordinator API. This will use Autocert to automagically fetch the needed https certs for your channel.
+
+```
+--showip
+```
+Launching as Coordinator prints a lot of diagnostic information while running. This will enable showing your IP in those log messages.
+
+>Type `menu` to view a list of functions. Functions that are darkened are disabled.
 
 ## Dependencies
 
@@ -28,17 +38,9 @@ Type `menu` to view a list of functions. Functions that are darkened are disable
 
 ## Operating System
 
-Karai is made in Linux. Other operating systems work but may produce subtle visual differences from what you see in screenshots.
-
--   Linux
--   MacOS (Need testers)
--   BSD (Need testers)
--   Windows
-    -   Note: Windows requires Git BASH for proper color rendering [Download](https://gitforwindows.org/)
+Karai supports Linux on AMD64 architecture, but may compile in other settings. Differences between Linux and non-Linux installs should be expected.
 
 ## Building
-
-Note: These build instructions should run on any OS. Some Windows users will need to [modify the libp2p init line](https://superuser.com/questions/223104/setting-and-using-variable-within-same-command-line-in-windows-cmd-exe) to properly use inline environment variables
 
 ```bash
 git clone https://github.com/karai/go-karai
@@ -52,7 +54,7 @@ go build && ./go-karai
 
 **Optional:** Compile with all errors displayed, then run binary. Avoids "too many errors" from hiding error info.
 
-`go build -gcflags="-e" && ./go-karai // or compile with full errors`
+`go build -gcflags="-e" && ./go-karai `
 
 ## Contributing
 
