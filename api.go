@@ -60,14 +60,15 @@ func restAPI() {
 
 func socketHandler(conn *websocket.Conn) {
 	for {
-		msgType, msg, err := conn.ReadMessage()
-		handle("", err)
 		defer conn.Close()
-
-		// this echo is sent successfully
-		// err = conn.WriteMessage(msgType, msg)
-		// handle("", err)
-
+		msgType, msg, err := conn.ReadMessage()
+		if err != nil {
+			color.Set(color.FgHiYellow, color.Bold)
+			fmt.Printf("\n[%s] [%s] Peer socket closed!", timeStamp(), conn.RemoteAddr())
+			color.Set(color.FgHiWhite, color.Bold)
+			break
+		}
+		defer conn.Close()
 		if bytes.HasPrefix(msg, joinmessage) {
 			trimNewline := bytes.TrimRight(msg, "\n")
 			trimmedPubKey := bytes.TrimLeft(trimNewline, "JOIN ")
@@ -76,7 +77,7 @@ func socketHandler(conn *websocket.Conn) {
 				regValidate, _ = regexp.MatchString(`[a-f0-9]{64}`, string(trimmedPubKey))
 				if regValidate == false {
 					logrus.Error("Contains illegal characters")
-					// conn.Close()
+					conn.Close()
 					return
 				}
 				fmt.Printf("\n- Node Pub Key Received: %v\n", string(trimmedPubKey))
@@ -86,9 +87,7 @@ func socketHandler(conn *websocket.Conn) {
 				fmt.Printf("- Node Pub Key: %v\n", string(trimmedPubKey))
 				signedNodePubKey := ed25519.Sign(trimmedPrivKey, trimmedPubKey)
 				fmt.Printf("- P2P Signed Pubkey: %x\n", string(signedNodePubKey))
-				// this is not sent successfully
 				hexSig := fmt.Sprintf("%x", signedNodePubKey)
-
 				err = conn.WriteMessage(msgType, []byte(hexSig))
 				handle("respond with signed node pubkey", err)
 
@@ -98,7 +97,7 @@ func socketHandler(conn *websocket.Conn) {
 				}
 			} else {
 				fmt.Printf("Join PubKey %s has incorrect length. PubKey received has a length of %v", string(trimmedPubKey), len(trimmedPubKey))
-				// conn.Close()
+				conn.Close()
 				return
 			}
 		}

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"log"
 	"net"
 	"time"
 )
@@ -42,22 +41,10 @@ func initConnection() {
 	p2pDialer(joinAddress, joinAddressPort, joinMessage, pubKey)
 }
 
-// func handleRequest(conn net.Conn) {
-// 	buf := make([]byte, 1024)
-// 	readBuffer, err := conn.Read(buf)
-// 	if err != nil {
-// 		fmt.Println("Error reading:", err.Error())
-// 	}
-// 	fmt.Println(readBuffer)
-// 	ackstring := "Message received." + string(signedPubKey)
-// 	conn.Write([]byte(ackstring))
-// 	conn.Close()
-// }
-
 func handleConnection(conn net.Conn) {
 	bufferBytes, err := bufio.NewReader(conn).ReadBytes('\n')
 	if err != nil {
-		log.Println("client left..")
+		fmt.Printf("Peer disconnected: %s", conn.RemoteAddr())
 		conn.Close()
 		return
 	}
