@@ -87,7 +87,9 @@ func socketHandler(conn *websocket.Conn) {
 				signedNodePubKey := ed25519.Sign(trimmedPrivKey, trimmedPubKey)
 				fmt.Printf("- P2P Signed Pubkey: %x\n", string(signedNodePubKey))
 				// this is not sent successfully
-				err = conn.WriteMessage(msgType, []byte("success"))
+				hexSig := fmt.Sprintf("%x", signedNodePubKey)
+
+				err = conn.WriteMessage(msgType, []byte(hexSig))
 				handle("respond with signed node pubkey", err)
 
 				if !fileExists(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey") {
