@@ -148,7 +148,7 @@ func announce() {
 		revealIP()
 		logrus.Info("Running on port: ", karaiAPIPort)
 	} else {
-		logrus.Debug("launching as normal user on port: ", karaiAPIPort)
+		logrus.Debug("Running as normal user on port: ", karaiAPIPort)
 	}
 }
 

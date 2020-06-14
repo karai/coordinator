@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"strconv"
 
+	"github.com/fatih/color"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -44,15 +45,16 @@ func restAPI() {
 		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 		conn, _ := upgrader.Upgrade(w, r, nil)
 		defer conn.Close()
-		fmt.Printf("\n[%s] Peer socket opened!\n", timeStamp())
+		color.Set(color.FgHiGreen, color.Bold)
+		fmt.Printf("\n[%s] [%s] Peer socket opened!\n", timeStamp(), conn.RemoteAddr())
+		color.Set(color.FgWhite, color.Bold)
 		socketHandler(conn)
 	})
-
 	if !wantsHTTPS {
-		logrus.Error(http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
+		logrus.Debug(http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
 	}
 	if wantsHTTPS {
-		logrus.Error(http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
+		logrus.Debug(http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
 	}
 }
 
@@ -60,15 +62,21 @@ func socketHandler(conn *websocket.Conn) {
 	for {
 		msgType, msg, err := conn.ReadMessage()
 		handle("", err)
-		err = conn.WriteMessage(msgType, msg)
-		handle("", err)
+		defer conn.Close()
+
+		// this echo is sent successfully
+		// err = conn.WriteMessage(msgType, msg)
+		// handle("", err)
+
 		if bytes.HasPrefix(msg, joinmessage) {
-			trimmedPubKey := bytes.TrimLeft(msg, "JOIN ")
+			trimNewline := bytes.TrimRight(msg, "\n")
+			trimmedPubKey := bytes.TrimLeft(trimNewline, "JOIN ")
 			if len(trimmedPubKey) == 64 {
 				var regValidate bool
 				regValidate, _ = regexp.MatchString(`[a-f0-9]{64}`, string(trimmedPubKey))
 				if regValidate == false {
 					logrus.Error("Contains illegal characters")
+					// conn.Close()
 					return
 				}
 				fmt.Printf("\n- Node Pub Key Received: %v\n", string(trimmedPubKey))
@@ -78,14 +86,17 @@ func socketHandler(conn *websocket.Conn) {
 				fmt.Printf("- Node Pub Key: %v\n", string(trimmedPubKey))
 				signedNodePubKey := ed25519.Sign(trimmedPrivKey, trimmedPubKey)
 				fmt.Printf("- P2P Signed Pubkey: %x\n", string(signedNodePubKey))
-				err = conn.WriteMessage(2, signedNodePubKey)
-				handle("", err)
+				// this is not sent successfully
+				err = conn.WriteMessage(msgType, []byte("success"))
+				handle("respond with signed node pubkey", err)
+
 				if !fileExists(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey") {
 					createFile(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey")
 					writeFileBytes(p2pConfigDir+"/"+string(trimmedPubKey)+".pubkey", signedNodePubKey)
 				}
 			} else {
-				logrus.Error("Join PubKey has incorrect length. PubKey received has a length of ", len(trimmedPubKey))
+				fmt.Printf("Join PubKey %s has incorrect length. PubKey received has a length of %v", string(trimmedPubKey), len(trimmedPubKey))
+				// conn.Close()
 				return
 			}
 		}
