@@ -64,11 +64,14 @@ func printGraph(directory string) {
 
 // printTx This is just your basic 'print a transaction'
 // command. It takes a file as a parameter.
-func printTx(file string) string {
+func printTx(file string, appendComma bool) string {
 	dat, err := ioutil.ReadFile(file)
 	handle("derp, something went wrong", err)
-	datString := string(dat) + ",\n"
-	return datString
+	if appendComma == true {
+		return string(dat) + ",\n"
+	} else {
+		return string(dat)
+	}
 }
 
 // hashTx This will compute the tx hash using sha256
