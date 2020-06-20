@@ -26,7 +26,7 @@ var upgrader = websocket.Upgrader{
 }
 var joinMsg []byte = []byte("JOIN")
 var castMsg []byte = []byte("CAST")
-var nodePubKeySignature []byte
+var versionMsg []byte = []byte("VERSION")
 
 // restAPI() This is the main API that is activated when isCoord == true
 func restAPI() {
@@ -137,6 +137,9 @@ func channelSocketHandler(conn *websocket.Conn) {
 				conn.Close()
 				return
 			}
+		}
+		if bytes.HasPrefix(msg, versionMsg) {
+			conn.WriteMessage(msgType, []byte(semverInfo()))
 		}
 	}
 }
