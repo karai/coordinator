@@ -36,9 +36,9 @@ func connectChannel(ktx string, pubKey ed25519.PublicKey) {
 		conn, _, err := websocket.DefaultDialer.Dial(urlConnection.String(), nil)
 		color.Set(color.FgHiRed, color.Bold)
 		handle("There was a problem connecting to the channel: ", err)
-
+		color.Set(color.FgHiCyan, color.Bold)
 		msg := "JOIN " + fmt.Sprintf("%x", pubKey)
-		fmt.Printf("Msg: %s\n", msg)
+		fmt.Printf("\nMsg: %s\n", msg)
 
 		// Initial Connection Sends N1:PK to Coord
 		err = conn.WriteMessage(1, []byte(msg))
@@ -57,7 +57,8 @@ func connectChannel(ktx string, pubKey ed25519.PublicKey) {
 				fmt.Println("\nThere was a problem reading this message:", err)
 				return
 			}
-			fmt.Printf("recv: %s", message)
+			color.Set(color.FgHiWhite, color.Bold)
+			fmt.Printf("\nrecv: %s", message)
 		}
 		// }()
 	}
