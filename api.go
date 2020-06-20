@@ -27,6 +27,7 @@ var upgrader = websocket.Upgrader{
 var joinMsg []byte = []byte("JOIN")
 var castMsg []byte = []byte("CAST")
 var versionMsg []byte = []byte("VERSION")
+var peerMsg []byte = []byte("PEER")
 
 // restAPI() This is the main API that is activated when isCoord == true
 func restAPI() {
@@ -141,6 +142,9 @@ func channelSocketHandler(conn *websocket.Conn) {
 		if bytes.HasPrefix(msg, versionMsg) {
 			conn.WriteMessage(msgType, []byte(semverInfo()))
 		}
+		if bytes.HasPrefix(msg, peerMsg) {
+			conn.WriteMessage(msgType, []byte(getPeerID()))
+		}
 	}
 }
 
@@ -178,6 +182,23 @@ func notFound(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte(`{"bruh": "lol"}`))
 }
 
+// returns the contents of the peer.id file
+func getPeerID() string {
+	peerFile, err := os.OpenFile(configPeerIDFile,
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	handle("Can't find peer.id file: ", err)
+	defer peerFile.Close()
+
+	fileToRead, err := ioutil.ReadFile(configPeerIDFile)
+
+	var peerId = string(fileToRead)
+	fmt.Println(peerId)
+
+	handle("Error: ", err)
+
+	return peerId
+}
+
 // returnPeerID will deliver the contents of peer.id file
 // through the API. This is the first step in connecting to
 // a tx channel.
@@ -185,15 +206,9 @@ func returnPeerID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
-	peerFile, err := os.OpenFile(configPeerIDFile,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	handle("Can't find peer.id file: ", err)
-	defer peerFile.Close()
+	var peerId = getPeerID()
 
-	fileToRead, err := ioutil.ReadFile(configPeerIDFile)
-	// fmt.Println(fileToRead)
-	handle("Error: ", err)
-	w.Write([]byte("{\"p2p_peer_ID\": \"" + string(fileToRead) + "\"}"))
+	w.Write([]byte("{\"p2p_peer_ID\": \"" + peerId + "\"}"))
 }
 
 // returnVersion This is a dedicated endpoint for returning
@@ -204,17 +219,28 @@ func returnVersion(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("{\"karai_version\": \"" + semverInfo() + "\"}"))
 }
 
+func getTransactions() {
+	matches, _ := filepath.Glob(graphDir + "/*.json")
+
+	for _, match := range matches {
+		fmt.Println(match)
+	}
+}
+
 // returnTransactions This will print the contents of all of
 // the trasnsactions in the graph as an array of JSON objects.
 // The {} at the end was a hack because, in a hurry, I
 // manually constructed the JSON objects and never went back
 // to write proper object creation.
 func returnTransactions(w http.ResponseWriter, r *http.Request) {
+	getTransactions()
+
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	matches, _ := filepath.Glob(graphDir + "/*.json")
 	w.Write([]byte("[\n\t"))
 	for _, match := range matches {
+		fmt.Printf(printTx(match))
 		w.Write([]byte(printTx(match)))
 	}
 	w.Write([]byte("{}"))
