@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/url"
 
+	"github.com/fatih/color"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 )
@@ -16,7 +17,11 @@ type clientHeader struct {
 }
 
 func connectChannel(ktx string) {
-	fmt.Printf("\nconnectChannel called with ktx %s", ktx)
+
+	color.Set(color.FgHiCyan, color.Bold)
+	fmt.Printf("\nReceived connection request with ktx %s", ktx)
+
+	color.Set(color.FgHiWhite, color.Bold)
 	// connect
 	if isCoordinator {
 		logrus.Error("this is for clients only.")
@@ -25,12 +30,19 @@ func connectChannel(ktx string) {
 		// interrupt := make(chan os.Signal, 1)
 		// signal.Notify(interrupt, os.Interrupt)
 		urlConnection := url.URL{Scheme: "ws", Host: ktx, Path: "/api/v1/channel"}
-		fmt.Printf("\nconnecting to %s", urlConnection.String())
+		color.Set(color.FgHiGreen, color.Bold)
+		fmt.Printf("\nConnecting to %s", urlConnection.String())
 		conn, _, err := websocket.DefaultDialer.Dial(urlConnection.String(), nil)
+		color.Set(color.FgHiRed, color.Bold)
 		handle("There was a problem connecting to the channel: ", err)
-		var pubKeyJoinString string = "JOIN 3ffe2c26989b5bfe019647bb1b8c3f0bc72698cc71c9d1872e004208201cd7b6"
+		var joinWord string = "JOIN "
+		var joinAndPubKey []byte = pubKey
+		joinWord += string(joinAndPubKey)
+		combined := []byte(joinWord)
+		color.Set(color.FgHiYellow, color.Bold)
+		fmt.Printf("\n%s", combined)
 		// Initial Connection Sends N1:PK to Coord
-		err = conn.WriteMessage(1, []byte(pubKeyJoinString))
+		err = conn.WriteMessage(1, combined)
 		// defer conn.Close()
 		// done := make(chan struct{})
 		// listen for welcome
@@ -42,7 +54,8 @@ func connectChannel(ktx string) {
 		for {
 			_, message, err := conn.ReadMessage()
 			if err != nil {
-				fmt.Println("There was a problem reading this message:", err)
+				color.Set(color.FgHiRed, color.Bold)
+				fmt.Println("\nThere was a problem reading this message:", err)
 				return
 			}
 			fmt.Printf("recv: %s", message)

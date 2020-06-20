@@ -20,7 +20,7 @@ func inputHandler() {
 		fmt.Printf("\n%v%v%v\n", color.WhiteString("Type '"), color.GreenString("menu"), color.WhiteString("' to view a list of commands"))
 		fmt.Print(color.GreenString("-> "))
 		text, _ := reader.ReadString('\n')
-		text = strings.Replace(text, "\n", "", -1)
+		text = strings.TrimSpace(text)
 		if strings.Compare("help", text) == 0 {
 			menu()
 		} else if strings.Compare("?", text) == 0 {
