@@ -17,33 +17,35 @@ type clientHeader struct {
 	ClientProtocolVersion  string `json:"client_protocol_version"`
 }
 
-func connectChannel(ktx string) bool {
+func connectChannel(ktx string) {
 	// connect
-	interrupt := make(chan os.Signal, 1)
-	signal.Notify(interrupt, os.Interrupt)
-	u := url.URL{Scheme: "ws", Host: ktx, Path: "/api/v1/channel"}
-	log.Printf("connecting to %s", u.String())
-	c, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
-	handle("There was a problem connecting to the channel: ", err)
-	defer c.Close()
-	done := make(chan struct{})
-	// listen for welcome
-	go func() {
-		defer close(done)
+	if !isCoordinator {
+		interrupt := make(chan os.Signal, 1)
+		signal.Notify(interrupt, os.Interrupt)
+		u := url.URL{Scheme: "ws", Host: ktx, Path: "/api/v1/channel"}
+		log.Printf("connecting to %s", u.String())
+		conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+		handle("There was a problem connecting to the channel: ", err)
 		// Initial Connection Sends N1:PK to Coord
-		// if we are returning, validate signed N1:C
-		// Upon successful connection, submit joinTx
-		// if joinTx published, return true on connectChannel() for success
-		for {
-			_, message, err := c.ReadMessage()
-			if err != nil {
-				fmt.Println("There was a problem reading this message:", err)
-				return
+		err = conn.WriteMessage(1, []byte("JOIN "+string(pubKey)))
+		defer conn.Close()
+		done := make(chan struct{})
+		// listen for welcome
+		go func() {
+			defer close(done)
+			// if we are returning, validate signed N1:S
+			// Upon successful connection, submit joinTx
+			// if joinTx published, return true on connectChannel() for success
+			for {
+				_, message, err := conn.ReadMessage()
+				if err != nil {
+					fmt.Println("There was a problem reading this message:", err)
+					return
+				}
+				fmt.Printf("recv: %s", message)
 			}
-			log.Printf("recv: %s", message)
-		}
-	}()
-	return true
+		}()
+	}
 }
 
 // The N1 also needs to know how to construct the join message, so I should add that in parallel to clientops.go

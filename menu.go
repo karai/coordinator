@@ -55,7 +55,7 @@ func inputHandler() {
 			logrus.Debug("Print-graph")
 			printGraph(graphDir)
 		} else if strings.HasPrefix(text, "connect-channel") {
-			// initConnection(strings.TrimPrefix(text, "connect-channel "))
+			connectChannel(strings.TrimPrefix(text, "connect-channel "))
 		} else if strings.Compare("exit", text) == 0 {
 			logrus.Warning("Exiting")
 			menuExit()
