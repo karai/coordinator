@@ -24,7 +24,8 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
-var joinmessage []byte = []byte("JOIN")
+var joinMsg []byte = []byte("JOIN")
+var castMsg []byte = []byte("CAST")
 var nodePubKeySignature []byte
 
 // restAPI() This is the main API that is activated when isCoord == true
@@ -41,14 +42,14 @@ func restAPI() {
 	api.HandleFunc("/version", returnVersion).Methods(http.MethodGet)
 	api.HandleFunc("/transactions", returnTransactions).Methods(http.MethodGet)
 	api.HandleFunc("/transaction/send", transactionHandler).Methods(http.MethodPost)
-	api.HandleFunc("/join", func(w http.ResponseWriter, r *http.Request) {
+	api.HandleFunc("/channel", func(w http.ResponseWriter, r *http.Request) {
 		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 		conn, _ := upgrader.Upgrade(w, r, nil)
 		defer conn.Close()
 		color.Set(color.FgHiGreen, color.Bold)
 		fmt.Printf("\n[%s] [%s] Peer socket opened!\n", timeStamp(), conn.RemoteAddr())
 		color.Set(color.FgWhite, color.Bold)
-		socketHandler(conn)
+		channelSocketHandler(conn)
 	})
 	if !wantsHTTPS {
 		logrus.Debug(http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
@@ -58,7 +59,11 @@ func restAPI() {
 	}
 }
 
-func socketHandler(conn *websocket.Conn) {
+func channelSocketHandler(conn *websocket.Conn) {
+
+	// TODO: look into whether it makes sense to use channels for concurrency
+	// in any of this.
+
 	for {
 		defer conn.Close()
 		msgType, msg, err := conn.ReadMessage()
@@ -69,7 +74,39 @@ func socketHandler(conn *websocket.Conn) {
 			break
 		}
 		defer conn.Close()
-		if bytes.HasPrefix(msg, joinmessage) {
+		if bytes.HasPrefix(msg, joinMsg) {
+			trimNewline := bytes.TrimRight(msg, "\n")
+			trimmedPubKey := bytes.TrimLeft(trimNewline, "JOIN ")
+			if len(trimmedPubKey) == 64 {
+				var regValidate bool
+				regValidate, _ = regexp.MatchString(`[a-f0-9]{64}`, string(trimmedPubKey))
+				if regValidate == false {
+					logrus.Error("Contains illegal characters")
+					conn.Close()
+					return
+				}
+				fmt.Printf("\n- Node Pub Key Received: %v\n", string(trimmedPubKey))
+				privKey = readFileBytes("priv.key")
+				trimmedPrivKey = privKey[:64]
+				fmt.Printf("- Coord Private Key: %x\n", string(trimmedPrivKey))
+				fmt.Printf("- Node Pub Key: %v\n", string(trimmedPubKey))
+				signedNodePubKey := ed25519.Sign(trimmedPrivKey, trimmedPubKey)
+				fmt.Printf("- P2P Signed Pubkey: %x\n", string(signedNodePubKey))
+				hexSig := fmt.Sprintf("%x", signedNodePubKey)
+				err = conn.WriteMessage(msgType, []byte(hexSig))
+				handle("respond with signed node pubkey", err)
+
+				if !fileExists(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey") {
+					createFile(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey")
+					writeFileBytes(p2pConfigDir+"/"+string(trimmedPubKey)+".pubkey", signedNodePubKey)
+				}
+			} else {
+				fmt.Printf("Join PubKey %s has incorrect length. PubKey received has a length of %v", string(trimmedPubKey), len(trimmedPubKey))
+				conn.Close()
+				return
+			}
+		}
+		if bytes.HasPrefix(msg, joinMsg) {
 			trimNewline := bytes.TrimRight(msg, "\n")
 			trimmedPubKey := bytes.TrimLeft(trimNewline, "JOIN ")
 			if len(trimmedPubKey) == 64 {

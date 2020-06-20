@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-func p2pDialer(ip, port, message string, pubKey []byte) {
+func p2pTCPDialer(ip, port, message string, pubKey []byte) {
 	var dialer net.Dialer
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
@@ -38,20 +38,26 @@ func initConnection() {
 	joinAddress := "zeus.karai.io"
 	joinAddressPort := "4201"
 	joinMessage := "JOIN"
-	p2pDialer(joinAddress, joinAddressPort, joinMessage, pubKey)
+	p2pTCPDialer(joinAddress, joinAddressPort, joinMessage, pubKey)
 }
 
 func handleConnection(conn net.Conn) {
-	bufferBytes, err := bufio.NewReader(conn).ReadBytes('\n')
+	_, err := bufio.NewReader(conn).ReadBytes('\n')
 	if err != nil {
 		fmt.Printf("Peer disconnected: %s", conn.RemoteAddr())
 		conn.Close()
 		return
 	}
-	message := string(bufferBytes)
-	clientAddr := conn.RemoteAddr().String()
-	response := fmt.Sprintf(message + " from " + clientAddr + "\n")
-	fmt.Println(response)
-	conn.Write([]byte("Sent: " + response))
-	handleConnection(conn)
+	// bufferBytes, err := bufio.NewReader(conn).ReadBytes('\n')
+	// if err != nil {
+	// 	fmt.Printf("Peer disconnected: %s", conn.RemoteAddr())
+	// 	conn.Close()
+	// 	return
+	// }
+	// message := string(bufferBytes)
+	// clientAddr := conn.RemoteAddr().String()
+	// response := fmt.Sprintf(message + " from " + clientAddr + "\n")
+	// fmt.Println(response)
+	// conn.Write([]byte("Sent: " + response))
+	// handleConnection(conn)
 }

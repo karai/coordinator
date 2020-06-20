@@ -22,7 +22,7 @@ var trimmedPubKey []byte
 // [✔️] Node:  Generates Secret Key (N1:SK) and Public Key(N1:PK)
 // [✔️] Node:  Initial Connection Sends N1:PK to Coord
 // [✔️] Coord: Signs N1:PK with CA:SK (N1:S)
-// [❌] Coord: Sends CA:N1:S to Node
+// [✔️] Coord: Sends CA:N1:S to Node
 // [ ] Node:  Verifies N1:S using known CA:PK from pointer (Good Coordinator)
 // [ ] Node:  Signs N1:PK with N1:SK (N1:S)
 // [ ] Node:  Sends N1:S to Coord
@@ -30,6 +30,13 @@ var trimmedPubKey []byte
 // [ ] Coord: Sends N1:C to Node
 // [ ] Node:  Requests Cert Revocation List
 // [ ] Coord: Sends CRL to Node
+
+// grab the response from when the client signs on and sends the key over
+// take that response and shove it up your ass kek
+// verify it usin te well documented golang docs for ed25519 verify
+// this will likely need to be done by completingf the connect channel function.
+// TODO: make zeus info into variables
+// fgor now make thed channel connection function just connect to zeus.
 
 // generateEd25519 Generate credentials and if Coordinator then sign them
 // https://hackmd.io/@ZL2uKk4cThC4TG0z7Wu7sg/H1Ubn6d9L
