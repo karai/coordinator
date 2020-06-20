@@ -16,7 +16,6 @@ import (
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/acme/autocert"
-	"golang.org/x/crypto/ed25519"
 )
 
 var upgrader = websocket.Upgrader{
@@ -31,7 +30,7 @@ var peerMsg []byte = []byte("PEER")
 var txMsg []byte = []byte("TRANSACTIONS")
 
 // restAPI() This is the main API that is activated when isCoord == true
-func restAPI() {
+func restAPI(keyCollection *keys) {
 	headersCORS := handlers.AllowedHeaders([]string{"Access-Control-Allow-Headers", "Access-Control-Allow-Methods", "Access-Control-Allow-Origin", "Cache-Control", "Content-Security-Policy", "Feature-Policy", "Referrer-Policy", "X-Requested-With"})
 	originsCORS := handlers.AllowedOrigins([]string{
 		"*",
@@ -51,7 +50,7 @@ func restAPI() {
 		color.Set(color.FgHiGreen, color.Bold)
 		fmt.Printf("\n[%s] [%s] Peer socket opened!\n", timeStamp(), conn.RemoteAddr())
 		color.Set(color.FgWhite, color.Bold)
-		channelSocketHandler(conn)
+		channelSocketHandler(conn, keyCollection)
 	})
 	if !wantsHTTPS {
 		logrus.Debug(http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
@@ -61,7 +60,7 @@ func restAPI() {
 	}
 }
 
-func channelSocketHandler(conn *websocket.Conn) {
+func channelSocketHandler(conn *websocket.Conn, keyCollection *keys) {
 
 	// TODO: look into whether it makes sense to use channels for concurrency
 	// in any of this.
@@ -88,51 +87,16 @@ func channelSocketHandler(conn *websocket.Conn) {
 					return
 				}
 				fmt.Printf("\n- Node Pub Key Received: %v\n", string(trimmedPubKey))
-				privKey = readFileBytes("priv.key")
-				trimmedPrivKey = privKey[:64]
-				fmt.Printf("- Coord Private Key: %x\n", string(trimmedPrivKey))
-				fmt.Printf("- Node Pub Key: %v\n", string(trimmedPubKey))
-				signedNodePubKey := ed25519.Sign(trimmedPrivKey, trimmedPubKey)
-				fmt.Printf("- P2P Signed Pubkey: %x\n", string(signedNodePubKey))
-				hexSig := fmt.Sprintf("%x", signedNodePubKey)
+				fmt.Printf("- Coord Private Key: %x\n", keyCollection.privKey)
+				fmt.Printf("- Node Pub Key: %x\n", keyCollection.pubKey)
+				fmt.Printf("- P2P Signed Pubkey: %x\n", keyCollection.signedKey)
+				hexSig := fmt.Sprintf("%x", keyCollection.signedKey)
 				err = conn.WriteMessage(msgType, []byte(hexSig))
 				handle("respond with signed node pubkey", err)
 
 				if !fileExists(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey") {
 					createFile(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey")
-					writeFileBytes(p2pConfigDir+"/"+string(trimmedPubKey)+".pubkey", signedNodePubKey)
-				}
-			} else {
-				fmt.Printf("Join PubKey %s has incorrect length. PubKey received has a length of %v", string(trimmedPubKey), len(trimmedPubKey))
-				conn.Close()
-				return
-			}
-		}
-		if bytes.HasPrefix(msg, joinMsg) {
-			trimNewline := bytes.TrimRight(msg, "\n")
-			trimmedPubKey := bytes.TrimLeft(trimNewline, "JOIN ")
-			if len(trimmedPubKey) == 64 {
-				var regValidate bool
-				regValidate, _ = regexp.MatchString(`[a-f0-9]{64}`, string(trimmedPubKey))
-				if regValidate == false {
-					logrus.Error("Contains illegal characters")
-					conn.Close()
-					return
-				}
-				fmt.Printf("\n- Node Pub Key Received: %v\n", string(trimmedPubKey))
-				privKey = readFileBytes("priv.key")
-				trimmedPrivKey = privKey[:64]
-				fmt.Printf("- Coord Private Key: %x\n", string(trimmedPrivKey))
-				fmt.Printf("- Node Pub Key: %v\n", string(trimmedPubKey))
-				signedNodePubKey := ed25519.Sign(trimmedPrivKey, trimmedPubKey)
-				fmt.Printf("- P2P Signed Pubkey: %x\n", string(signedNodePubKey))
-				hexSig := fmt.Sprintf("%x", signedNodePubKey)
-				err = conn.WriteMessage(msgType, []byte(hexSig))
-				handle("respond with signed node pubkey", err)
-
-				if !fileExists(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey") {
-					createFile(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey")
-					writeFileBytes(p2pConfigDir+"/"+string(trimmedPubKey)+".pubkey", signedNodePubKey)
+					writeFileBytes(p2pConfigDir+"/"+string(trimmedPubKey)+".pubkey", keyCollection.signedKey)
 				}
 			} else {
 				fmt.Printf("Join PubKey %s has incorrect length. PubKey received has a length of %v", string(trimmedPubKey), len(trimmedPubKey))
@@ -153,11 +117,11 @@ func channelSocketHandler(conn *websocket.Conn) {
 }
 
 // initAPI Check if we are running as a coordinator, if we are, start the API
-func initAPI() {
+func initAPI(keyCollection *keys) {
 	if !isCoordinator {
 		logrus.Debug("isCoordinator == false, skipping webserver deployment")
 	} else {
-		go restAPI()
+		go restAPI(keyCollection)
 	}
 }
 

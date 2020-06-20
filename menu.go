@@ -14,7 +14,7 @@ import (
 // a few words that correspond to functions in the app. When
 // a command isn't understood, it displays the help menu and
 // returns to listening to input.
-func inputHandler() {
+func inputHandler(keyCollection *keys) {
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		fmt.Printf("\n%v%v%v\n", color.WhiteString("Type '"), color.GreenString("menu"), color.WhiteString("' to view a list of commands"))
@@ -55,7 +55,7 @@ func inputHandler() {
 			logrus.Debug("Print-graph")
 			printGraph(graphDir)
 		} else if strings.HasPrefix(text, "connect") {
-			connectChannel(strings.TrimPrefix(text, "connect "))
+			connectChannel(strings.TrimPrefix(text, "connect "), keyCollection.pubKey)
 		} else if strings.Compare("exit", text) == 0 {
 			logrus.Warning("Exiting")
 			menuExit()
