@@ -44,7 +44,7 @@ func initConnection() {
 func handleConnection(conn net.Conn) {
 	_, err := bufio.NewReader(conn).ReadBytes('\n')
 	if err != nil {
-		fmt.Printf("Peer disconnected: %s", conn.RemoteAddr())
+		fmt.Printf("\nPeer disconnected: %s", conn.RemoteAddr())
 		conn.Close()
 		return
 	}

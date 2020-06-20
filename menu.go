@@ -54,8 +54,8 @@ func inputHandler() {
 		} else if strings.Compare("print-graph", text) == 0 {
 			logrus.Debug("Print-graph")
 			printGraph(graphDir)
-		} else if strings.HasPrefix(text, "connect-channel") {
-			connectChannel(strings.TrimPrefix(text, "connect-channel "))
+		} else if strings.HasPrefix(text, "connect") {
+			connectChannel(strings.TrimPrefix(text, "connect "))
 		} else if strings.Compare("exit", text) == 0 {
 			logrus.Warning("Exiting")
 			menuExit()
@@ -103,7 +103,7 @@ func menu() {
 	color.Set(color.FgGreen)
 	fmt.Println("\nKARAI_OPTIONS")
 	color.Set(color.FgWhite)
-	fmt.Println("connect-channel <ktx> \t Connects to channel")
+	fmt.Println("connect <ktx> \t Connects to channel where <ktx> is ip.ip.ip.ip:port")
 	color.Set(color.FgHiBlack)
 	fmt.Println("list-servers \t\t Lists pinning servers")
 	color.Set(color.FgGreen)

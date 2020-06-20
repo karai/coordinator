@@ -2,12 +2,10 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"net/url"
-	"os"
-	"os/signal"
 
 	"github.com/gorilla/websocket"
+	"github.com/sirupsen/logrus"
 )
 
 type clientHeader struct {
@@ -18,33 +16,38 @@ type clientHeader struct {
 }
 
 func connectChannel(ktx string) {
+	fmt.Printf("\nconnectChannel called with ktx %s", ktx)
 	// connect
+	if isCoordinator {
+		logrus.Error("this is for clients only.")
+	}
 	if !isCoordinator {
-		interrupt := make(chan os.Signal, 1)
-		signal.Notify(interrupt, os.Interrupt)
-		u := url.URL{Scheme: "ws", Host: ktx, Path: "/api/v1/channel"}
-		log.Printf("connecting to %s", u.String())
-		conn, _, err := websocket.DefaultDialer.Dial(u.String(), nil)
+		// interrupt := make(chan os.Signal, 1)
+		// signal.Notify(interrupt, os.Interrupt)
+		urlConnection := url.URL{Scheme: "ws", Host: ktx, Path: "/api/v1/channel"}
+		fmt.Printf("\nconnecting to %s", urlConnection.String())
+		conn, _, err := websocket.DefaultDialer.Dial(urlConnection.String(), nil)
 		handle("There was a problem connecting to the channel: ", err)
+		var pubKeyJoinString string = "JOIN 3ffe2c26989b5bfe019647bb1b8c3f0bc72698cc71c9d1872e004208201cd7b6"
 		// Initial Connection Sends N1:PK to Coord
-		err = conn.WriteMessage(1, []byte("JOIN "+string(pubKey)))
-		defer conn.Close()
-		done := make(chan struct{})
+		err = conn.WriteMessage(1, []byte(pubKeyJoinString))
+		// defer conn.Close()
+		// done := make(chan struct{})
 		// listen for welcome
-		go func() {
-			defer close(done)
-			// if we are returning, validate signed N1:S
-			// Upon successful connection, submit joinTx
-			// if joinTx published, return true on connectChannel() for success
-			for {
-				_, message, err := conn.ReadMessage()
-				if err != nil {
-					fmt.Println("There was a problem reading this message:", err)
-					return
-				}
-				fmt.Printf("recv: %s", message)
+		// go func() {
+		// 	// defer close(done)
+		// 	// if we are returning, validate signed N1:S
+		// 	// Upon successful connection, submit joinTx
+		// 	// if joinTx published, return true on connectChannel() for success
+		for {
+			_, message, err := conn.ReadMessage()
+			if err != nil {
+				fmt.Println("There was a problem reading this message:", err)
+				return
 			}
-		}()
+			fmt.Printf("recv: %s", message)
+		}
+		// }()
 	}
 }
 
