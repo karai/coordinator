@@ -7,6 +7,7 @@ import (
 	"github.com/fatih/color"
 	"github.com/gorilla/websocket"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/crypto/ed25519"
 )
 
 type clientHeader struct {
@@ -16,7 +17,7 @@ type clientHeader struct {
 	ClientProtocolVersion  string `json:"client_protocol_version"`
 }
 
-func connectChannel(ktx string) {
+func connectChannel(ktx string, pubKey ed25519.PublicKey) {
 
 	color.Set(color.FgHiCyan, color.Bold)
 	fmt.Printf("\nReceived connection request with ktx %s", ktx)
@@ -35,14 +36,12 @@ func connectChannel(ktx string) {
 		conn, _, err := websocket.DefaultDialer.Dial(urlConnection.String(), nil)
 		color.Set(color.FgHiRed, color.Bold)
 		handle("There was a problem connecting to the channel: ", err)
-		var joinWord string = "JOIN "
-		var joinAndPubKey []byte = pubKey
-		joinWord += string(joinAndPubKey)
-		combined := []byte(joinWord)
-		color.Set(color.FgHiYellow, color.Bold)
-		fmt.Printf("\n%s", combined)
+
+		msg := "JOIN " + fmt.Sprintf("%x", pubKey)
+		fmt.Printf("Msg: %s\n", msg)
+
 		// Initial Connection Sends N1:PK to Coord
-		err = conn.WriteMessage(1, combined)
+		err = conn.WriteMessage(1, []byte(msg))
 		// defer conn.Close()
 		// done := make(chan struct{})
 		// listen for welcome

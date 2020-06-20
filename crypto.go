@@ -8,13 +8,11 @@ import (
 	"golang.org/x/crypto/ed25519"
 )
 
-var pubKey ed25519.PublicKey
-var privKey ed25519.PrivateKey
-var signedPubKey []byte
-var shortPrivKey []byte
-var nodePubKey ed25519.PublicKey
-var trimmedPrivKey []byte
-var trimmedPubKey []byte
+type keys struct {
+	pubKey    ed25519.PublicKey
+	privKey   ed25519.PrivateKey
+	signedKey []byte
+}
 
 // [✔️] Coord: Generates Secret Key (CA:SK)and Public Key (CA:PK)
 // [✔️] Coord: Signs CA:PK with CA:SK(CA:S)
@@ -40,27 +38,43 @@ var trimmedPubKey []byte
 
 // generateEd25519 Generate credentials and if Coordinator then sign them
 // https://hackmd.io/@ZL2uKk4cThC4TG0z7Wu7sg/H1Ubn6d9L
-func generateEd25519() {
+func generateEd25519() *keys {
+	keyCollection := keys{}
+
+	// Generate our primary public and private key pair
 	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
+
+	keyCollection.pubKey = pubKey
+	keyCollection.privKey = privKey
+	keyCollection.signedKey = ed25519.Sign(keyCollection.privKey, keyCollection.pubKey)
+
 	handle("Something went wrong generating a key: ", err)
+
+	// Delete stored public and private keys
 	deleteFile("pub.key")
 	deleteFile("priv.key")
+
+	// Create files read to store new key data
 	createFile("pub.key")
 	createFile("priv.key")
-	shortPrivKey = privKey[:32]
+
 	logrus.Info("P2P Public Key: ")
-	fmt.Printf("%x\n", pubKey)
+	fmt.Printf("%x\n", keyCollection.pubKey)
+
 	logrus.Info("P2P Private Key: ")
-	fmt.Printf("%x\n", privKey)
-	logrus.Info("P2P Short Private Key: ")
-	fmt.Printf("%x\n", shortPrivKey)
-	signedKey := ed25519.Sign(privKey, pubKey)
+	fmt.Printf("%x\n", keyCollection.privKey)
+
 	logrus.Info("P2P Signed Pubkey: ")
-	fmt.Printf("%x\n", signedKey)
-	writeFileBytes("pub.key", pubKey)
-	writeFileBytes("priv.key", privKey)
+	fmt.Printf("%x\n", keyCollection.signedKey)
+
+	// Write new pub / priv key to file
+	writeFileBytes("pub.key", keyCollection.pubKey)
+	writeFileBytes("priv.key", keyCollection.privKey)
+
+	return &keyCollection
 }
 
+/*
 func coordSignNodePubKey(nodePubKey ed25519.PublicKey) []byte {
 	privKey = readFileBytes("priv.key")
 	trimmedPrivKey = privKey[:64]
@@ -70,3 +84,4 @@ func coordSignNodePubKey(nodePubKey ed25519.PublicKey) []byte {
 	fmt.Printf("P2P Signed Pubkey: %x\n", signedNodePubKey)
 	return signedNodePubKey
 }
+*/

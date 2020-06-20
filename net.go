@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"fmt"
+	"golang.org/x/crypto/ed25519"
 	"net"
 	"time"
 )
@@ -34,7 +35,7 @@ func p2pListener() {
 	}
 }
 
-func initConnection() {
+func initConnection(pubKey ed25519.PublicKey) {
 	joinAddress := "zeus.karai.io"
 	joinAddressPort := "4201"
 	joinMessage := "JOIN"
