@@ -82,35 +82,61 @@ func inputHandler(keyCollection *keys) {
 // menu This is the body of text printed when the user
 // types 'help', 'menu' or any undefined input.
 func menu() {
-	color.Set(color.FgGreen)
-	fmt.Println("\nCHANNEL_OPTIONS")
-	color.Set(color.FgWhite)
-	if !isCoordinator {
-	} else {
-		fmt.Println("create-channel \t\t Create a karai transaction channel")
-		fmt.Println("generate-pointer \t Generate a Karai <=> TRTL pointer")
-		fmt.Println("benchmark \t\t Conducts timed benchmark")
-		fmt.Println("push-graph \t\t Prints graph history")
+	menuOptions := []string{"CHANNEL_OPTIONS", "WALLET_API_OPTIONS", "KARAI_OPTIONS", "GENERAL_OPTIONS"}
+	menuData := map[string][][]string{
+		"CHANNEL_OPTIONS": {
+			{
+				"create-channel \t\t Create a karai transaction channel",
+				"generate-pointer \t Generate a Karai <=> TRTL pointer",
+				"benchmark \t\t Conducts timed benchmark",
+				"push-graph \t\t Prints graph history",
+			},
+		},
+		"WALLET_API_OPTIONS": {
+			{
+				"open-wallet \t\t Open a TRTL wallet",
+				"open-wallet-info \t Show wallet and connection info",
+				"create-wallet \t\t Create a TRTL wallet",
+			},
+			{
+				"wallet-balance \t\t Displays wallet balance",
+			},
+		},
+		"KARAI_OPTIONS": {
+			{
+				"connect <ktx> \t\t Connects to channel where <ktx> is ip.ip.ip.ip:port",
+			},
+			{
+				"list-servers \t\t Lists pinning servers",
+			},
+		},
+		"GENERAL_OPTIONS": {
+			{
+				"version \t\t Displays version",
+				"license \t\t Displays license",
+				"exit \t\t\t Quit immediately",
+			},
+		},
 	}
-	color.Set(color.FgGreen)
-	fmt.Println("\nWALLET_API_OPTIONS")
-	color.Set(color.FgWhite)
-	fmt.Println("open-wallet \t\t Open a TRTL wallet")
-	fmt.Println("open-wallet-info \t Show wallet and connection info")
-	fmt.Println("create-wallet \t\t Create a TRTL wallet")
-	color.Set(color.FgHiBlack)
-	fmt.Println("wallet-balance \t\t Displays wallet balance")
-	color.Set(color.FgGreen)
-	fmt.Println("\nKARAI_OPTIONS")
-	color.Set(color.FgWhite)
-	fmt.Println("connect <ktx> \t Connects to channel where <ktx> is ip.ip.ip.ip:port")
-	color.Set(color.FgHiBlack)
-	fmt.Println("list-servers \t\t Lists pinning servers")
-	color.Set(color.FgGreen)
-	fmt.Println("\nGENERAL_OPTIONS")
-	color.Set(color.FgWhite)
-	fmt.Println("version \t\t Displays version")
-	fmt.Println("license \t\t Displays license")
-	fmt.Println("exit \t\t\t Quit immediately")
+
+	for _, opt := range menuOptions {
+		color.Set(color.FgGreen)
+		fmt.Println("\n" + opt)
+		if opt == "CHANNEL_OPTIONS" && !isCoordinator {
+			continue
+		}
+		for colour, options := range menuData[opt] {
+			switch colour {
+			case 0:
+				color.Set(color.FgWhite)
+			case 1:
+				color.Set(color.FgHiBlack)
+			}
+			for _, message := range options {
+				fmt.Println(message)
+			}
+		}
+	}
+
 	fmt.Println("")
 }
