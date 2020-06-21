@@ -45,8 +45,7 @@ type JoinTx struct {
 	Prev []byte `json:"tx_prev"`
 }
 
-// printGraph a different way to look at transaction history
-// this should probably be deleted.
+// openGraph a function to open and print the first transaction in graph dir
 func openGraph(directory string) {
 	handle, err := os.Open(directory + "/" + "Tx_1.json")
 
