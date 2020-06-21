@@ -53,7 +53,7 @@ func inputHandler(keyCollection *keys) {
 			benchmark()
 		} else if strings.Compare("print-graph", text) == 0 {
 			logrus.Debug("Print-graph")
-			printGraph(graphDir)
+			openGraph(graphDir)
 		} else if strings.HasPrefix(text, "connect") {
 			connectChannel(strings.TrimPrefix(text, "connect "), keyCollection.pubKey)
 		} else if strings.Compare("exit", text) == 0 {

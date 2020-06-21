@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"encoding/json"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"os"
 	"strconv"
@@ -22,10 +23,10 @@ type Graph struct {
 
 // GraphTx This is the structure of the transaction
 type GraphTx struct {
-	Type int    `json:"tx_type"`
-	Hash []byte `json:"tx_hash"`
-	Data []byte `json:"tx_data"`
-	Prev []byte `json:"tx_prev"`
+	Type int             `json:"tx_type"`
+	Hash string          `json:"tx_hash"`
+	Data json.RawMessage `json:"tx_data"`
+	Prev string          `json:"tx_prev"`
 }
 
 // MilestoneTx This is the structure of the transaction
@@ -46,20 +47,28 @@ type JoinTx struct {
 
 // printGraph a different way to look at transaction history
 // this should probably be deleted.
-func printGraph(directory string) {
-	jsonFile, err := os.Open(directory + "/" + "Tx_1.json")
-	handle("Derp we can't open this JSON: ", err)
-	byteValue, _ := ioutil.ReadAll(jsonFile)
-	var Graph Graph
-	json.Unmarshal(byteValue, &Graph)
-	for i := 0; i < 20; i++ {
-		fmt.Println("\nhere we go")
-		fmt.Println(Graph.Transactions[i].Hash)
-		fmt.Println(Graph.Transactions[i].Prev)
-		fmt.Println(Graph.Transactions[i].Type)
-		fmt.Println(Graph.Transactions[i].Data)
+func openGraph(directory string) {
+	handle, err := os.Open(directory + "/" + "Tx_1.json")
+
+	if err != nil {
+		fmt.Println("Derp we can't open this JSON: ", err)
 	}
-	defer jsonFile.Close()
+
+	defer handle.Close()
+	printGraph(handle)
+}
+
+// printGraph a different way to look at transaction history
+// this should probably be deleted.
+func printGraph(graphHandle io.Reader) {
+	var graphTx GraphTx
+	if err := json.NewDecoder(graphHandle).Decode(&graphTx); err != nil {
+		fmt.Printf("error deserializing JSON: %v", err)
+		return
+	}
+
+	fmt.Printf("\nhere we go\n%s\n%s\n%d\n%s",
+		graphTx.Hash, graphTx.Prev, graphTx.Type, string(graphTx.Data))
 }
 
 // printTx This is just your basic 'print a transaction'
@@ -74,9 +83,9 @@ func printTx(file string) string {
 // hashTx This will compute the tx hash using sha256
 func (graphTx *GraphTx) hashTx() {
 	// logrus.Debug("Hashing a Tx ", graphTx.Hash)
-	data := bytes.Join([][]byte{graphTx.Data, graphTx.Prev}, []byte{})
+	data := bytes.Join([][]byte{graphTx.Data, []byte(graphTx.Prev)}, []byte{})
 	hash := sha256.Sum256(data)
-	graphTx.Hash = hash[:]
+	graphTx.Hash = string(hash[:])
 }
 
 // addTx This will add a transaction to the graph
@@ -86,7 +95,7 @@ func (graph *Graph) addTx(txType int, data string) {
 	} else {
 		logrus.Debug("Adding a Tx")
 		prevTx := graph.Transactions[len(graph.Transactions)-1]
-		new := txConstructor(txType, data, prevTx.Hash)
+		new := txConstructor(txType, data, []byte(prevTx.Hash))
 		graph.Transactions = append(graph.Transactions, new)
 	}
 }
@@ -98,14 +107,14 @@ func (graph *Graph) addMilestone(data string) {
 	} else {
 		prevTransaction := graph.Transactions[len(graph.Transactions)-1]
 		// paramFile, _ = os.Open("./config/milestone.json")
-		new := txConstructor(1, data, prevTransaction.Hash)
+		new := txConstructor(1, data, []byte(prevTransaction.Hash))
 		graph.Transactions = append(graph.Transactions, new)
 	}
 }
 
 // txConstructor This will construct a tx
 func txConstructor(txType int, data string, prevHash []byte) *GraphTx {
-	transaction := &GraphTx{txType, []byte{}, []byte(data), prevHash}
+	transaction := &GraphTx{txType, string([]byte{}), []byte(data), string(prevHash)}
 	transaction.hashTx()
 	return transaction
 }
@@ -153,7 +162,7 @@ func sendClientHeader(name, version, id, channel string) bool {
 // soon. It's just a general hash function to hash the milestone
 // data returned during the channel connection process.
 func (graphTx *GraphTx) generalHash(response string) [32]byte {
-	hashedData := bytes.Join([][]byte{graphTx.Data, graphTx.Prev}, []byte{})
+	hashedData := bytes.Join([][]byte{graphTx.Data, []byte(graphTx.Prev)}, []byte{})
 	hash := sha256.Sum256(hashedData)
 	return hash
 }
