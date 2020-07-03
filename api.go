@@ -26,9 +26,11 @@ var upgrader = websocket.Upgrader{
 var joinMsg []byte = []byte("JOIN")
 var castMsg []byte = []byte("CAST")
 var nodePubKeySignature []byte
+var peerMsg []byte = []byte("PEER")
+var pubKeyMsg []byte = []byte("PUBK")
 
 // restAPI() This is the main API that is activated when isCoord == true
-func restAPI(keyCollection *keys) {
+func restAPI(keyCollection *ED25519Keys) {
 	headersCORS := handlers.AllowedHeaders([]string{"Access-Control-Allow-Headers", "Access-Control-Allow-Methods", "Access-Control-Allow-Origin", "Cache-Control", "Content-Security-Policy", "Feature-Policy", "Referrer-Policy", "X-Requested-With"})
 	originsCORS := handlers.AllowedOrigins([]string{
 		"*",
@@ -58,10 +60,7 @@ func restAPI(keyCollection *keys) {
 	}
 }
 
-func channelSocketHandler(conn *websocket.Conn, keyCollection *keys) {
-
-	// TODO: look into whether it makes sense to use channels for concurrency
-	// in any of this.
+func channelSocketHandler(conn *websocket.Conn, keyCollection *ED25519Keys) {
 
 	for {
 		defer conn.Close()
@@ -69,10 +68,16 @@ func channelSocketHandler(conn *websocket.Conn, keyCollection *keys) {
 		if err != nil {
 			color.Set(color.FgHiYellow, color.Bold)
 			fmt.Printf("\n[%s] [%s] Peer socket closed!", timeStamp(), conn.RemoteAddr())
-			color.Set(color.FgHiWhite, color.Bold)
+			color.Set(color.FgWhite)
 			break
 		}
 		defer conn.Close()
+		if bytes.HasPrefix(msg, pubKeyMsg) {
+			conn.WriteMessage(msgType, []byte(keyCollection.publicKey))
+		}
+		if bytes.HasPrefix(msg, peerMsg) {
+			conn.WriteMessage(msgType, []byte(getPeerID()))
+		}
 		if bytes.HasPrefix(msg, joinMsg) {
 			trimNewline := bytes.TrimRight(msg, "\n")
 			trimmedPubKey := bytes.TrimLeft(trimNewline, "JOIN ")
@@ -84,18 +89,30 @@ func channelSocketHandler(conn *websocket.Conn, keyCollection *keys) {
 					conn.Close()
 					return
 				}
-				fmt.Printf("\n- Node Pub Key Received: %v\n", string(trimmedPubKey))
-				fmt.Printf("- Coord Private Key: %x\n", keyCollection.privKey)
-				fmt.Printf("- Node Pub Key: %x\n", keyCollection.pubKey)
-				fmt.Printf("- P2P Signed Pubkey: %x\n", keyCollection.signedKey)
-				hexSig := fmt.Sprintf("%x", keyCollection.signedKey)
-				err = conn.WriteMessage(msgType, []byte(hexSig))
+				pubkey := string(trimmedPubKey)
+				color.Set(color.FgWhite)
+				fmt.Println("Node Pub Key Received: " + pubkey)
+				fmt.Println("Our Pub Key:           " + keyCollection.publicKey)
+				fmt.Println("Our Private Key:       " + keyCollection.privateKey)
+				// fmt.Printf("\nOur Signed Pubkey: %s\n", keyCollection.signedKey)
+				// hexSig := fmt.Sprintf("%s", keyCollection.signedKey)
+
+				signedNodePubKey := signKey(keyCollection, pubkey)
+				fmt.Println("Signature:             " + signedNodePubKey)
+				err = conn.WriteMessage(msgType, []byte(signedNodePubKey))
 				handle("respond with signed node pubkey", err)
 
+				// RIGHT HERE conn.ReadMessage()
+				_, recvN1s, _ := conn.ReadMessage()
+				fmt.Printf("\nNode1 Signature Received: %s", string(recvN1s))
+				// hashedSigCertResponse := string(bytes.TrimRight(n1sresponse, "\n"))
+
+				// Does a peer file for this node exist?
 				if !fileExists(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey") {
 					createFile(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey")
-					writeFileBytes(p2pConfigDir+"/"+string(trimmedPubKey)+".pubkey", keyCollection.signedKey)
+					writeFile(p2pConfigDir+"/"+string(trimmedPubKey)+".pubkey", keyCollection.signedKey)
 				}
+
 			} else {
 				fmt.Printf("Join PubKey %s has incorrect length. PubKey received has a length of %v", string(trimmedPubKey), len(trimmedPubKey))
 				conn.Close()
@@ -106,7 +123,7 @@ func channelSocketHandler(conn *websocket.Conn, keyCollection *keys) {
 }
 
 // initAPI Check if we are running as a coordinator, if we are, start the API
-func initAPI(keyCollection *keys) {
+func initAPI(keyCollection *ED25519Keys) {
 	if !isCoordinator {
 		logrus.Debug("isCoordinator == false, skipping webserver deployment")
 	} else {
@@ -119,7 +136,6 @@ func initAPI(keyCollection *keys) {
 func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-
 	w.Write([]byte("Hello " + appName))
 }
 
@@ -145,16 +161,17 @@ func notFound(w http.ResponseWriter, r *http.Request) {
 func returnPeerID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	var peerID = getPeerID()
+	// peerFile, err := os.OpenFile(configPeerIDFile,
+	// 	os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	// handle("Can't find peer.id file: ", err)
+	// defer peerFile.Close()
 
-	peerFile, err := os.OpenFile(configPeerIDFile,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	handle("Can't find peer.id file: ", err)
-	defer peerFile.Close()
-
-	fileToRead, err := ioutil.ReadFile(configPeerIDFile)
-	// fmt.Println(fileToRead)
-	handle("Error: ", err)
-	w.Write([]byte("{\"p2p_peer_ID\": \"" + string(fileToRead) + "\"}"))
+	// fileToRead, err := ioutil.ReadFile(configPeerIDFile)
+	// // fmt.Println(fileToRead)
+	// handle("Error: ", err)
+	// w.Write([]byte("{\"p2p_peer_ID\": \"" + string(fileToRead) + "\"}"))
+	w.Write([]byte("{\"p2p_peer_ID\": \"" + peerID + "\"}"))
 }
 
 // returnVersion This is a dedicated endpoint for returning
@@ -180,4 +197,16 @@ func returnTransactions(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte("{}"))
 	w.Write([]byte("\n]"))
+}
+
+func getPeerID() string {
+	peerFile, err := os.OpenFile(configPeerIDFile,
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	handle("Can't find peer.id file: ", err)
+	defer peerFile.Close()
+	fileToRead, err := ioutil.ReadFile(configPeerIDFile)
+	var peerID = string(fileToRead)
+	fmt.Println(peerID)
+	handle("Error: ", err)
+	return peerID
 }

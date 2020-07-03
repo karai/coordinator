@@ -3,7 +3,7 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"crypto/sha256"
+	"crypto/sha512"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/fatih/color"
-	"github.com/sirupsen/logrus"
 )
 
 // Graph This is the structure of the Graph
@@ -79,11 +78,11 @@ func printTx(file string) string {
 	return datString
 }
 
-// hashTx This will compute the tx hash using sha256
+// hashTx This will compute the tx hash using sha512
 func (graphTx *GraphTx) hashTx() {
 	// logrus.Debug("Hashing a Tx ", graphTx.Hash)
 	data := bytes.Join([][]byte{graphTx.Data, []byte(graphTx.Prev)}, []byte{})
-	hash := sha256.Sum256(data)
+	hash := sha512.Sum512(data)
 	graphTx.Hash = string(hash[:])
 }
 
@@ -92,10 +91,15 @@ func (graph *Graph) addTx(txType int, data string) {
 	if !isCoordinator {
 		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
 	} else {
-		logrus.Debug("Adding a Tx")
+		// I wonder sometimes if all these debug statements are costing me tx speed.
+		// logrus.Debug("Adding a Tx")
 		prevTx := graph.Transactions[len(graph.Transactions)-1]
 		new := txConstructor(txType, data, []byte(prevTx.Hash))
 		graph.Transactions = append(graph.Transactions, new)
+		if wantsMatrix {
+			publishToMatrix(data, matrixURL, matrixRoomID, matrixToken)
+		}
+
 	}
 }
 
@@ -108,6 +112,9 @@ func (graph *Graph) addMilestone(data string) {
 		// paramFile, _ = os.Open("./config/milestone.json")
 		new := txConstructor(1, data, []byte(prevTransaction.Hash))
 		graph.Transactions = append(graph.Transactions, new)
+		// if wantsMatrix {
+		// 	publishToMatrix(data, matrixURL, matrixRoomID, matrixToken)
+		// }
 	}
 }
 
@@ -121,7 +128,11 @@ func txConstructor(txType int, data string, prevHash []byte) *GraphTx {
 // rootTx Transaction channels start with a rootTx transaction always
 func rootTx() *GraphTx {
 	fmt.Printf("Coordinator status: %t", isCoordinator)
-	return txConstructor(0, "Karai Transaction Channel - Root", []byte{})
+	var data = "Karai Transaction Channel - Root"
+	if wantsMatrix {
+		publishToMatrix(data, matrixURL, matrixRoomID, matrixToken)
+	}
+	return txConstructor(0, data, []byte{})
 }
 
 // spawnGraph starts a new transaction channel with Root Tx
@@ -160,54 +171,11 @@ func sendClientHeader(name, version, id, channel string) bool {
 // generalHash This is a test function that will probably go away
 // soon. It's just a general hash function to hash the milestone
 // data returned during the channel connection process.
-func (graphTx *GraphTx) generalHash(response string) [32]byte {
+func (graphTx *GraphTx) generalHash(response string) [64]byte {
 	hashedData := bytes.Join([][]byte{graphTx.Data, []byte(graphTx.Prev)}, []byte{})
-	hash := sha256.Sum256(hashedData)
+	hash := sha512.Sum512(hashedData)
 	return hash
 }
-
-// func connectToChannel(channel string) {
-//  if validateKTX(channel) {
-//      if validateCoordVersion(channel) {
-//          //send client header to coord
-//          if sendClientHeader(clientHeaderAppName, clientHeaderAppVersion, clientHeaderPeerID, channel) {
-//              //coord should respond with most recent milestone
-//              //hash the milestone
-//              if generalHash(res.Body) == milestone.Hash {
-//                  sendClientMilestoneHash(channel)
-//              }
-//              //send the hash to coord
-//              //coord approves
-//              //send join tx
-//              //listen for events
-//          } else if sendClientHeader(clientHeaderAppName, clientHeaderAppVersion, clientHeaderPeerID, channel) {
-//              logrus.Error("Problem constructing or sending client header.")
-//          }
-//      } else if !validateCoordVersion(channel) {
-//          logrus.Error("Coordinator Version Not Accepted")
-//      }
-//  } else if !validateKTX(channel) {
-//      logrus.Error("KTX Invalid")
-//  }
-// }
-
-// func coordVersionHandler(w http.ResponseWriter, r *http.Request) {
-//  return
-// }
-
-// func validateCoordVersion(channel string) bool {
-//  logrus.Info("fetching coordinator version for ", channel)
-//  req, err := http.NewRequest("GET", channel, nil)
-//  handle("Error getting coord info: ", err)
-//  client := &http.Client{Timeout: time.Second * 10}
-//  resp, err := client.Do(req)
-//  handle("Error getting coord info: ", err)
-//  defer resp.Body.Close()
-//  body, err := ioutil.ReadAll(resp.Body)
-//  logrus.Debug(body)
-//  handle("Error getting coord info: ", err)
-//  return true
-// }
 
 // benchmark Add a number of transactions and time the execution
 func benchmark() {
@@ -276,7 +244,7 @@ func spawnChannel() {
 		graph := spawnGraph()
 		// Add the current milestone.json in config
 		graph.addMilestone(loadMilestoneJSON())
-		graph.addTx(2, "{\"tx_slot\": 3}")
+		graph.addTx(2, "[{\"tx_slot\": 3}]")
 		// go txHandler()
 		// Report Txs
 		fmt.Printf("\n\nTx Legend: %v %v %v\n", color.YellowString("Root"), color.GreenString("Milestone"), color.BlueString("Normal"))

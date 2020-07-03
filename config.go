@@ -16,6 +16,8 @@ const hashDat = graphDir + "/ipfs-hash-list.dat"
 const p2pConfigDir = "./config/p2p"
 const p2pConfigFile = "peer.id"
 const configPeerIDFile = p2pConfigDir + "/" + p2pConfigFile
+const pubKeyFilePath = "pub.key"
+const privKeyFilePath = "priv.key"
 
 // Coordinator values
 var isCoordinator bool = false
@@ -30,3 +32,9 @@ var sslDomain = "example.com"
 var clientHeaderAppName string = appName
 var clientHeaderAppVersion string = semverInfo()
 var clientHeaderPeerID string
+
+// Matrix Values
+var wantsMatrix bool = false
+var matrixToken string = ""
+var matrixURL string = ""
+var matrixRoomID string = ""

@@ -4,13 +4,12 @@ package main
 func main() {
 	parseFlags()
 	announce()
-	keys := generateEd25519()
 	checkPeerFile()
+	keys := generateKeys()
 	locateGraphDir()
-	checkCreds()
 	ascii()
 	initAPI(keys)
-	go initConnection(keys.pubKey)
+	go initConnection(keys.publicKey)
 	go p2pListener()
 	inputHandler(keys)
 }

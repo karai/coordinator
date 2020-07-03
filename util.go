@@ -119,7 +119,10 @@ func checkPeerFile() {
 			peerIdentity := readFile(configPeerIDFile)
 			if len(peerIdentity) > 16 {
 				logrus.Debug("Machine identity looks ok")
-				logrus.Info("Machine Identity: " + peerIdentity)
+				color.Set(color.FgWhite)
+				fmt.Printf("Machine ID:\t")
+				color.Set(color.FgHiBlack)
+				fmt.Printf("%s", peerIdentity)
 				// TODO ADD MORE VALIDATION
 			} else if len(peerIdentity) < 16 {
 				deleteFile(configPeerIDFile)
@@ -145,7 +148,9 @@ func handle(msg string, err error) {
 // announce Tell us when the program is running
 func announce() {
 	if isCoordinator {
-		revealIP()
+		// if showIP {
+		// 	revealIP()
+		// }
 		logrus.Info("Running on port: ", karaiAPIPort)
 	} else {
 		logrus.Debug("Running as normal user on port: ", karaiAPIPort)
@@ -228,8 +233,7 @@ func readFileBytes(filename string) []byte {
 
 // deleteFile Generic file handler
 func deleteFile(filename string) {
-	var err = os.Remove(filename)
-	handle("", err)
+	os.Remove(filename)
 	logrus.Debug("Deleted file: ", filename)
 }
 

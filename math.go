@@ -4,19 +4,14 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/denisbrodbeck/machineid"
 	"github.com/sirupsen/logrus"
-	rashedCrypto "github.com/turtlecoin/go-turtlecoin/crypto"
-	rashedMnemonic "github.com/turtlecoin/go-turtlecoin/walletbackend/mnemonics"
 )
 
 // generatePeerIO uses the machine ID to generate a unique string
@@ -27,36 +22,6 @@ func generatePeerID() string {
 	fmt.Println(machineID)
 	writeFile(configPeerIDFile, machineID)
 	return machineID
-}
-
-// checkCreds Locate or create Karai credentials
-func checkCreds() {
-	if _, err := os.Stat(credentialsFile); err == nil {
-		logrus.Debug("Karai Credentials Found!")
-	} else {
-		logrus.Debug("No Credentials Found! Generating Credentials...")
-		rashed25519()
-	}
-}
-
-// rashed25519 Use TRTL Crypto to generate credentials
-// TODO: Replace manually entered JSON
-func rashed25519() {
-	logrus.Debug("Generating credentials")
-	priv, pub, err := rashedCrypto.GenerateKeys()
-	seed := rashedMnemonic.PrivateKeyToMnemonic(priv)
-	timeUnixNow := strconv.FormatInt(time.Now().Unix(), 10)
-	// TODO: Replace manually entered JSON
-	logrus.Debug("Writing credentials to file")
-	writeFile := []byte("{\n\t\"date_generated\": " + timeUnixNow + ",\n\t\"key_priv\": \"" + hex.EncodeToString(priv[:]) + "\",\n\t\"key_pub\": \"" + hex.EncodeToString(pub[:]) + "\",\n\t\"seed\": \"" + seed + "\"\n}")
-	logrus.Debug("Writing main file")
-	errWriteFile := ioutil.WriteFile("./"+credentialsFile, writeFile, 0644)
-	logrus.Debug(errWriteFile)
-	handle("Error writing file: ", err)
-	logrus.Debug("Writing backup credential file")
-	errWriteBackupFile := ioutil.WriteFile("./."+credentialsFile+"."+timeUnixNow+".backup", writeFile, 0644)
-	handle("Error writing file backup: ", err)
-	logrus.Debug(errWriteBackupFile)
 }
 
 // v4ToHex Convert an ip4 to hex
