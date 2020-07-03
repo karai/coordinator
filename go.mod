@@ -11,6 +11,7 @@ require (
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/websocket v1.4.2
 	github.com/ipfs/go-ipfs-api v0.0.3
+	github.com/matrix-org/gomatrix v0.0.0-20200501121722-e5578b12c752 // indirect
 	github.com/sirupsen/logrus v1.6.0
 	github.com/turtlecoin/go-turtlecoin v0.0.0-20200430022824-8d2a2b0f8c65
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37

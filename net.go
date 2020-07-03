@@ -4,28 +4,21 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"golang.org/x/crypto/ed25519"
 	"net"
+	"strconv"
 	"time"
 )
 
-func p2pTCPDialer(ip, port, message string, pubKey []byte) {
+func p2pTCPDialer(ip, port, message string, pubKey string) {
 	var dialer net.Dialer
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	connection, err := dialer.DialContext(ctx, "tcp", ip+":"+port)
-	handle("Something went wrong while trying to dial the coordinator: ", err)
-	defer connection.Close()
-	// TODO add some type of pause here to listen for commands.
-	// The way this is currently built means a new connection
-	// will be made for every time dialer is called.
-	fmt.Fprintf(connection, message)
-	status, err := bufio.NewReader(connection).ReadString('\n')
-	fmt.Println(status)
+	connection, _ := dialer.DialContext(ctx, "tcp", ip+":"+port)
+	connection.Close()
 }
 
 func p2pListener() {
-	listen, err := net.Listen("tcp", ":4201")
+	listen, err := net.Listen("tcp", ":"+strconv.Itoa(karaiP2PPort))
 	handle("Something went wrong creating a listener: ", err)
 	defer listen.Close()
 	for {
@@ -35,7 +28,7 @@ func p2pListener() {
 	}
 }
 
-func initConnection(pubKey ed25519.PublicKey) {
+func initConnection(pubKey string) {
 	joinAddress := "zeus.karai.io"
 	joinAddressPort := "4201"
 	joinMessage := "JOIN"
@@ -45,20 +38,20 @@ func initConnection(pubKey ed25519.PublicKey) {
 func handleConnection(conn net.Conn) {
 	_, err := bufio.NewReader(conn).ReadBytes('\n')
 	if err != nil {
-		fmt.Printf("\nPeer disconnected: %s", conn.RemoteAddr())
+		fmt.Printf("\n[%s] [%s] Peer socket opened!", timeStamp(), conn.RemoteAddr())
 		conn.Close()
 		return
 	}
-	// bufferBytes, err := bufio.NewReader(conn).ReadBytes('\n')
-	// if err != nil {
-	// 	fmt.Printf("Peer disconnected: %s", conn.RemoteAddr())
-	// 	conn.Close()
-	// 	return
-	// }
-	// message := string(bufferBytes)
-	// clientAddr := conn.RemoteAddr().String()
-	// response := fmt.Sprintf(message + " from " + clientAddr + "\n")
-	// fmt.Println(response)
-	// conn.Write([]byte("Sent: " + response))
-	// handleConnection(conn)
+	bufferBytes, err := bufio.NewReader(conn).ReadBytes('\n')
+	if err != nil {
+		fmt.Printf("Peer disconnected: %s", conn.RemoteAddr())
+		conn.Close()
+		return
+	}
+	message := string(bufferBytes)
+	clientAddr := conn.RemoteAddr().String()
+	response := fmt.Sprintf(message + " from " + clientAddr + "\n")
+	fmt.Println(response)
+	conn.Write([]byte("Sent: " + response))
+	handleConnection(conn)
 }

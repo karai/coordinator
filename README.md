@@ -2,33 +2,39 @@
 
 [![Discord](https://img.shields.io/discord/388915017187328002?label=Join%20Discord)](http://chat.turtlecoin.lol) [![GitHub issues](https://img.shields.io/github/issues/karai/go-karai?label=Issues)](https://github.com/karai/go-karai/issues) ![GitHub stars](https://img.shields.io/github/stars/karai/go-karai?label=Github%20Stars) ![Build](https://github.com/karai/go-karai/workflows/Build/badge.svg) ![GitHub](https://img.shields.io/github/license/karai/go-karai) ![GitHub issues by-label](https://img.shields.io/github/issues/karai/go-karai/Todo) [![Go Report Card](https://goreportcard.com/badge/github.com/karai/go-karai)](https://goreportcard.com/report/github.com/karai/go-karai)
 
-**Website:** [📝 karai.io](https://karai.io)  **Browse:** [💻 Karai Pointer Explorer](https://karaiexplorer.extrahash.org/)  **Read:** [🔗 Official Karai Blog](https://karai.io)
+**Website:** [📝 karai.io](https://karai.io) **Browse:** [💻 Karai Pointer Explorer](https://karaiexplorer.extrahash.org/) **Read:** [🔗 Official Karai Blog](https://karai.io)
 
 ## Usage
->Note: Karai aims to always compile and run on **Linux** targetting the **AMD64** CPU architecture. Other operating systems and architectures may compile and run this software but should do so expecting some inconsistencies.
+
+> Note: Karai aims to always compile and run on **Linux** targetting the **AMD64** CPU architecture. Other operating systems and architectures may compile and run this software but should do so expecting some inconsistencies.
 
 **Launch Karai**
+
 ```
 ./go-karai --coordinator --https --showip
 ```
 
 **Launch Options**
+
 ```
 --coordinator
 ```
-This will launch the go-karai client in Coordinator mode. This is needed for some functions. 
+
+This will launch the go-karai client in Coordinator mode. This is needed for some functions.
 
 ```
 --https
 ```
+
 Use https with Coordinator API. This will use Autocert to automagically fetch the needed https certs for your channel.
 
 ```
 --showip
 ```
+
 Launching as Coordinator prints a lot of diagnostic information while running. This will enable showing your IP in those log messages.
 
->Type `menu` to view a list of functions. Functions that are darkened are disabled.
+> Type `menu` to view a list of functions. Functions that are darkened are disabled.
 
 ## Dependencies
 
@@ -54,7 +60,7 @@ go build && ./go-karai
 
 **Optional:** Compile with all errors displayed, then run binary. Avoids "too many errors" from hiding error info.
 
-`go build -gcflags="-e" && ./go-karai `
+`go build -gcflags="-e" && ./go-karai`
 
 ## Contributing
 
