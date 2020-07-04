@@ -111,6 +111,15 @@ func timeStamp() string {
 // peer file, if it is not there we generate one, then we open it and see if
 // it conforms to what we expect, if it does then announce the peer identity.
 func checkPeerFile() {
+	if _, err := os.Stat(p2pConfigDir); os.IsNotExist(err) {
+		os.Mkdir(p2pConfigDir, 0700)
+	}
+	if _, err := os.Stat(p2pWhitelistDir); os.IsNotExist(err) {
+		os.Mkdir(p2pWhitelistDir, 0700)
+	}
+	if _, err := os.Stat(p2pBlacklistDir); os.IsNotExist(err) {
+		os.Mkdir(p2pBlacklistDir, 0700)
+	}
 	// logrus.Info("Checking peer file: " + p2pConfigDir + "/" + p2pConfigFile)
 	if !directoryMissing(p2pConfigDir) {
 		// logrus.Info(p2pConfigDir + " exists")
@@ -234,7 +243,6 @@ func readFileBytes(filename string) []byte {
 // deleteFile Generic file handler
 func deleteFile(filename string) {
 	os.Remove(filename)
-	logrus.Debug("Deleted file: ", filename)
 }
 
 // locateGraphDir Find graph storage, create if missing.
