@@ -2,6 +2,8 @@ package main
 
 import (
 	"bytes"
+	"crypto/sha512"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -9,6 +11,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/fatih/color"
 	"github.com/gorilla/handlers"
@@ -27,7 +30,8 @@ var joinMsg []byte = []byte("JOIN")
 var castMsg []byte = []byte("CAST")
 var nodePubKeySignature []byte
 var peerMsg []byte = []byte("PEER")
-var pubKeyMsg []byte = []byte("PUBK")
+var pubkMsg []byte = []byte("PUBK")
+var nsigMsg []byte = []byte("NSIG")
 
 // restAPI() This is the main API that is activated when isCoord == true
 func restAPI(keyCollection *ED25519Keys) {
@@ -67,12 +71,12 @@ func channelSocketHandler(conn *websocket.Conn, keyCollection *ED25519Keys) {
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
 			color.Set(color.FgHiYellow, color.Bold)
-			fmt.Printf("\n[%s] [%s] Peer socket closed!", timeStamp(), conn.RemoteAddr())
+			fmt.Printf("\n[%s] [%s] Peer socket closed!\n", timeStamp(), conn.RemoteAddr())
 			color.Set(color.FgWhite)
 			break
 		}
 		defer conn.Close()
-		if bytes.HasPrefix(msg, pubKeyMsg) {
+		if bytes.HasPrefix(msg, pubkMsg) {
 			conn.WriteMessage(msgType, []byte(keyCollection.publicKey))
 		}
 		if bytes.HasPrefix(msg, peerMsg) {
@@ -90,33 +94,79 @@ func channelSocketHandler(conn *websocket.Conn, keyCollection *ED25519Keys) {
 					return
 				}
 				pubkey := string(trimmedPubKey)
-				color.Set(color.FgWhite)
-				fmt.Println("Node Pub Key Received: " + pubkey)
-				fmt.Println("Our Pub Key:           " + keyCollection.publicKey)
-				fmt.Println("Our Private Key:       " + keyCollection.privateKey)
-				// fmt.Printf("\nOur Signed Pubkey: %s\n", keyCollection.signedKey)
-				// hexSig := fmt.Sprintf("%s", keyCollection.signedKey)
-
-				signedNodePubKey := signKey(keyCollection, pubkey)
-				fmt.Println("Signature:             " + signedNodePubKey)
-				err = conn.WriteMessage(msgType, []byte(signedNodePubKey))
-				handle("respond with signed node pubkey", err)
-
-				// RIGHT HERE conn.ReadMessage()
-				_, recvN1s, _ := conn.ReadMessage()
-				fmt.Printf("\nNode1 Signature Received: %s", string(recvN1s))
-				// hashedSigCertResponse := string(bytes.TrimRight(n1sresponse, "\n"))
-
-				// Does a peer file for this node exist?
-				if !fileExists(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey") {
-					createFile(p2pConfigDir + "/" + string(trimmedPubKey) + ".pubkey")
-					writeFile(p2pConfigDir+"/"+string(trimmedPubKey)+".pubkey", keyCollection.signedKey)
+				var whitelistPeerCertFile = p2pConfigDir + "/whitelist/" + pubkey + ".cert"
+				var blacklistPeerCertFile = p2pConfigDir + "/blacklist/" + pubkey + ".cert"
+				if fileExists(blacklistPeerCertFile) {
+					data := []byte("Error 403: You are banned")
+					conn.WriteMessage(1, data)
+					conn.Close()
+					return
 				}
+				if !fileExists(whitelistPeerCertFile) {
+					color.Set(color.FgWhite)
+					// fmt.Println("Node Pub Key Received:\n" + pubkey)
+					// fmt.Println("Our Pub Key:\n" + keyCollection.publicKey)
+					// fmt.Println("Our Private Key:\n" + keyCollection.privateKey)
+					// fmt.Printf("\nOur Signed Pubkey: %s\n", keyCollection.signedKey)
+					// hexSig := fmt.Sprintf("%s", keyCollection.signedKey)
 
-			} else {
-				fmt.Printf("Join PubKey %s has incorrect length. PubKey received has a length of %v", string(trimmedPubKey), len(trimmedPubKey))
-				conn.Close()
-				return
+					// Sending Coord Pubkey
+					signedNodePubKey := signKey(keyCollection, pubkey)
+					// fmt.Println("Signature:\n" + signedNodePubKey)
+
+					// When a peer is banned, this will trigger when they try to reconnect
+					_ = conn.WriteMessage(msgType, []byte(signedNodePubKey))
+					// handle("", err)
+
+					// Read the request which should be for a pubkey
+					_, coordRespPubKey, _ := conn.ReadMessage()
+					if bytes.HasPrefix(coordRespPubKey, pubkMsg) {
+						conn.WriteMessage(msgType, []byte(keyCollection.publicKey))
+						// fmt.Printf("\nRequest Received: %s", string(coordRespPubKey))
+
+						// Wait for a request that should look like
+						// NSIG + n1 signature
+						_, receivedN1s, _ := conn.ReadMessage()
+						if bytes.HasPrefix(receivedN1s, nsigMsg) {
+							// fmt.Printf("N1:S Received:\n%s", string(receivedN1s))
+							var stringN1S = string(receivedN1s)
+							var trimmedStringRecN1S = strings.TrimRight(stringN1S, "\n")
+							var n1sToHash = []byte(trimmedStringRecN1S)
+							var hashOfN1s = sha512.Sum512(n1sToHash)
+							var encodedN1sHash = hex.EncodeToString(hashOfN1s[:])
+							var signedHashOfN1s = sign(keyCollection, encodedN1sHash)
+							var certMsg = "CERT " + signedHashOfN1s
+							var trimmedCertMsg = strings.TrimLeft(certMsg, " ")
+							conn.WriteMessage(msgType, []byte(trimmedCertMsg))
+
+							color.Set(color.FgHiGreen, color.Bold)
+							fmt.Printf("[%s] [%s] Certificate Granted!\n", timeStamp(), conn.RemoteAddr())
+							color.Set(color.FgHiCyan, color.Bold)
+							fmt.Printf("user> ")
+							color.Set(color.FgHiBlack, color.Bold)
+							fmt.Printf("%s\n", pubkey)
+							color.Set(color.FgHiRed, color.Bold)
+							fmt.Printf("cert> ")
+							color.Set(color.FgHiBlack, color.Bold)
+							fmt.Printf("%s\n", signedHashOfN1s)
+							color.Set(color.FgWhite)
+							// Does a peer file for this node exist?
+							var peerCertFile = p2pConfigDir + "/whitelist/" + pubkey + ".cert"
+							if !fileExists(peerCertFile) {
+								createFile(peerCertFile)
+								writeFile(peerCertFile, signedHashOfN1s)
+							}
+						}
+
+					} else {
+						// fmt.Printf("Join PubKey %s has incorrect length. PubKey received has a length of %v", string(trimmedPubKey), len(trimmedPubKey))
+						conn.Close()
+						return
+					}
+				} else {
+					var wbPeerMsg = "Welcome back " + pubkey[:8]
+					conn.WriteMessage(1, []byte(wbPeerMsg))
+				}
 			}
 		}
 	}

@@ -56,6 +56,20 @@ func inputHandler(keyCollection *ED25519Keys) {
 			openGraph(graphDir)
 		} else if strings.HasPrefix(text, "connect") {
 			connectChannel(strings.TrimPrefix(text, "connect "), keyCollection.publicKey, keyCollection.signedKey)
+		} else if strings.HasPrefix(text, "ban ") {
+			bannedPeer := strings.TrimPrefix(text, "ban ")
+			banPeer(bannedPeer)
+		} else if strings.HasPrefix(text, "unban ") {
+			unBannedPeer := strings.TrimPrefix(text, "unban ")
+			unBanPeer(unBannedPeer)
+		} else if strings.HasPrefix(text, "blacklist") {
+			blackList()
+		} else if strings.HasPrefix(text, "clear blacklist") {
+			clearBlackList()
+		} else if strings.HasPrefix(text, "clear peerlist") {
+			clearPeerList()
+		} else if strings.HasPrefix(text, "peerlist") {
+			whiteList()
 		} else if strings.Compare("exit", text) == 0 {
 			logrus.Warning("Exiting")
 			menuExit()
@@ -91,23 +105,26 @@ func menu() {
 				"benchmark \t\t Conducts timed benchmark",
 				"push-graph \t\t Prints graph history",
 			},
+			{},
 		},
 		"WALLET_API_OPTIONS": {
+			{},
 			{
 				"open-wallet \t\t Open a TRTL wallet",
 				"open-wallet-info \t Show wallet and connection info",
 				"create-wallet \t\t Create a TRTL wallet",
-			},
-			{
 				"wallet-balance \t\t Displays wallet balance",
 			},
 		},
 		"KARAI_OPTIONS": {
 			{
 				"connect <ktx> \t\t Connects to channel where <ktx> is ip.ip.ip.ip:port",
-			},
-			{
-				"list-servers \t\t Lists pinning servers",
+				"peerlist \t\t Lists known peers.",
+				"blacklist \t\t Lists banned peers.",
+				"clear blacklist \t Unbans all blacklist peer certificates.",
+				"clear peerlist \t\t Purges all whitelist peer certificates.",
+				"ban <pubkey> \t\t Ban user certificate by pubkey.",
+				"unban <pubkey> \t\t Unban user certificate by pubkey.",
 			},
 		},
 		"GENERAL_OPTIONS": {
@@ -120,15 +137,15 @@ func menu() {
 	}
 
 	for _, opt := range menuOptions {
-		color.Set(color.FgGreen)
+		color.Set(color.FgHiGreen)
 		fmt.Println("\n" + opt)
-		if opt == "CHANNEL_OPTIONS" && !isCoordinator {
-			continue
-		}
+		// if opt == "CHANNEL_OPTIONS" && !isCoordinator {
+		// 	continue
+		// }
 		for colour, options := range menuData[opt] {
 			switch colour {
 			case 0:
-				color.Set(color.FgWhite)
+				color.Set(color.FgHiWhite)
 			case 1:
 				color.Set(color.FgHiBlack)
 			}
