@@ -18,7 +18,7 @@ func generateKeys() *ED25519Keys {
 	keys := ED25519Keys{}
 	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
 	if err != nil {
-		panic(err)
+		handle("error: ", err)
 	}
 	keys.privateKey = hex.EncodeToString(privKey[0:32])
 	keys.publicKey = hex.EncodeToString(pubKey)
@@ -29,87 +29,62 @@ func generateKeys() *ED25519Keys {
 
 func sign(myKeys *ED25519Keys, msg string) string {
 	messageBytes := []byte(msg)
-
 	privateKey, err := hex.DecodeString(myKeys.privateKey)
-
 	if err != nil {
-		panic(err)
+		handle("private key error: ", err)
 	}
-
 	publicKey, err := hex.DecodeString(myKeys.publicKey)
-
 	if err != nil {
-		panic(err)
+		handle("public key error: ", err)
 	}
-
 	privateKey = append(privateKey, publicKey...)
-
 	signature := ed25519.Sign(privateKey, messageBytes)
-
 	return hex.EncodeToString(signature)
 }
 
 func signKey(myKeys *ED25519Keys, publicKey string) string {
 	messageBytes, err := hex.DecodeString(publicKey)
-
 	if err != nil {
-		panic(err)
+		handle("error: ", err)
 	}
-
 	privateKey, err := hex.DecodeString(myKeys.privateKey)
-
 	if err != nil {
-		panic(err)
+		handle("error: ", err)
 	}
-
 	pubKey, err := hex.DecodeString(myKeys.publicKey)
-
 	if err != nil {
-		panic(err)
+		handle("error: ", err)
 	}
-
 	privateKey = append(privateKey, pubKey...)
-
 	signature := ed25519.Sign(privateKey, messageBytes)
-
 	return hex.EncodeToString(signature)
 }
 
 func verifySignature(publicKey string, msg string, signature string) bool {
 	pubKey, err := hex.DecodeString(publicKey)
-
 	if err != nil {
-		panic(err)
+		handle("error: ", err)
 	}
-
 	messageBytes := []byte(msg)
-
 	sig, err := hex.DecodeString(signature)
-
 	if err != nil {
-		panic(err)
+		handle("error: ", err)
 	}
-
 	return ed25519.Verify(pubKey, messageBytes, sig)
 }
 
 func verifySignedKey(publicKey string, publicSigningKey string, signature string) bool {
 	pubKey, err := hex.DecodeString(publicKey)
-
 	if err != nil {
-		panic(err)
+		handle("error: ", err)
 	}
-
 	pubSignKey, err := hex.DecodeString(publicSigningKey)
-
 	if err != nil {
-		panic(err)
+		handle("error: ", err)
 	}
 	sig, err := hex.DecodeString(signature)
-
 	if err != nil {
-		panic(err)
+		handle("error: ", err)
 	}
-
 	return ed25519.Verify(pubSignKey, pubKey, sig)
 }

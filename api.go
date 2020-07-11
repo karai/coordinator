@@ -81,23 +81,24 @@ func channelAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys, graph *G
 
 			// strip away the `RTRN` command prefix
 			input := strings.TrimLeft(string(msg), "RTRN ")
-			fmt.Println("input: ", input)
 			trimmedInput := strings.TrimSuffix(input, "\n")
 			fmt.Println("trimmedInput: ", trimmedInput)
 			var cert = strings.Split(trimmedInput, " ")
 
 			trimmer := strings.TrimSuffix(cert[1], "\n")
+			trimmedBytes := []byte(trimmer)
 
+			var hashOfTrimmer = sha512.Sum512(trimmedBytes)
+			var encodedHashOfTrimmer = hex.EncodeToString(hashOfTrimmer[:])
 			// extend some data to vars
-			fmt.Println("cert1:  ", cert[1])
+			// fmt.Println("cert1:  ", cert[1])
 
-			if !verifySignature(keyCollection.publicKey, cert[0], trimmer) {
+			if !verifySignature(keyCollection.publicKey, encodedHashOfTrimmer, cert[0]) {
 				fmt.Println("sig doesnt verify")
 			}
-			if verifySignature(keyCollection.publicKey, cert[0], trimmer) {
+			if verifySignature(keyCollection.publicKey, encodedHashOfTrimmer, cert[0]) {
 				fmt.Println("sig verifies")
 			}
-
 		}
 		if bytes.HasPrefix(msg, pubkMsg) {
 			conn.WriteMessage(msgType, []byte(keyCollection.publicKey))
