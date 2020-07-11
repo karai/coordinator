@@ -9,6 +9,16 @@ import (
 	"github.com/fatih/color"
 )
 
+// Split helps me split up the args after a command
+func Split(r rune) bool {
+	return r == ':' || r == '.'
+}
+
+type v1Tx struct {
+	channel string
+	msg     string
+}
+
 // inputHandler This is a basic input loop that listens for
 // a few words that correspond to functions in the app. When
 // a command isn't understood, it displays the help menu and
@@ -46,6 +56,26 @@ func inputHandler(keyCollection *ED25519Keys) {
 			openGraph(graphDir)
 		} else if strings.HasPrefix(text, "connect") {
 			connectChannel(strings.TrimPrefix(text, "connect "), keyCollection.publicKey, keyCollection.signedKey)
+		} else if strings.HasPrefix(text, "send") {
+			// strip away the `send` command prefix
+			input := strings.TrimPrefix(text, "send ")
+
+			// split up the words after the prefix
+			args := strings.FieldsFunc(input, Split)
+
+			// form an array conforming to our v1 tx type
+			tx := v1Tx{args[0], args[1]}
+
+			// extend some data to vars
+			channel := fmt.Sprintf(tx.channel)
+			msg := fmt.Sprintf(tx.msg)
+
+			// send the v1 transaction if the json is valid
+			if validJSON(msg) {
+				sendV1Transaction(channel, msg)
+			} else {
+				fmt.Printf("\nYour transaction %s was not interpreted as valid JSON. ", msg)
+			}
 		} else if strings.HasPrefix(text, "ban ") {
 			bannedPeer := strings.TrimPrefix(text, "ban ")
 			banPeer(bannedPeer)

@@ -123,21 +123,9 @@ func handleConnection(conn net.Conn) {
 	_, err := bufio.NewReader(conn).ReadBytes('\n')
 	if err != nil {
 		color.Set(color.FgHiBlue, color.Bold)
-		fmt.Printf("[%s] [%s] Peer Announce\n", timeStamp(), conn.RemoteAddr())
+		fmt.Printf("[%s] [%s] Peer Awakened\n", timeStamp(), conn.RemoteAddr())
 		conn.Close()
 		color.Set(color.FgWhite)
 		return
 	}
-	// bufferBytes, err := bufio.NewReader(conn).ReadBytes('\n')
-	// // if err != nil {
-	// // 	fmt.Printf("Peer disconnected: %s", conn.RemoteAddr())
-	// // 	conn.Close()
-	// // 	return
-	// // }
-	// message := string(bufferBytes)
-	// clientAddr := conn.RemoteAddr().String()
-	// response := fmt.Sprintf(message + " from " + clientAddr + "\n")
-	// fmt.Println(response)
-	// conn.Write([]byte("Sent: " + response))
-	// handleConnection(conn)
 }
