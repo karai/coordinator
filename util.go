@@ -197,7 +197,6 @@ func readFile(filename string) string {
 			break
 		}
 	}
-	// fmt.Println(string(text))
 	return string(text)
 }
 

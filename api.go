@@ -33,6 +33,7 @@ var peerMsg []byte = []byte("PEER")
 var pubkMsg []byte = []byte("PUBK")
 var nsigMsg []byte = []byte("NSIG")
 var tsxnMsg []byte = []byte("TSXN")
+var rtrnMsg []byte = []byte("RTRN")
 
 // restAPI() This is the main API that is activated when isCoord == true
 func restAPI(keyCollection *ED25519Keys, graph *Graph) {
@@ -75,7 +76,29 @@ func channelAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys, graph *G
 			color.Set(color.FgWhite)
 			break
 		}
-		// defer conn.Close()
+		if bytes.HasPrefix(msg, rtrnMsg) {
+			fmt.Println("return message: ", string(msg))
+
+			// strip away the `RTRN` command prefix
+			input := strings.TrimLeft(string(msg), "RTRN ")
+			fmt.Println("input: ", input)
+			trimmedInput := strings.TrimSuffix(input, "\n")
+			fmt.Println("trimmedInput: ", trimmedInput)
+			var cert = strings.Split(trimmedInput, " ")
+
+			trimmer := strings.TrimSuffix(cert[1], "\n")
+
+			// extend some data to vars
+			fmt.Println("cert1:  ", cert[1])
+
+			if !verifySignature(keyCollection.publicKey, cert[0], trimmer) {
+				fmt.Println("sig doesnt verify")
+			}
+			if verifySignature(keyCollection.publicKey, cert[0], trimmer) {
+				fmt.Println("sig verifies")
+			}
+
+		}
 		if bytes.HasPrefix(msg, pubkMsg) {
 			conn.WriteMessage(msgType, []byte(keyCollection.publicKey))
 		}
