@@ -21,9 +21,9 @@ import (
 )
 
 var upgrader = websocket.Upgrader{
-	// EnableCompression: true,
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
+	EnableCompression: true,
+	ReadBufferSize:    1024,
+	WriteBufferSize:   1024,
 }
 
 var nodePubKeySignature []byte
@@ -32,9 +32,10 @@ var castMsg []byte = []byte("CAST")
 var peerMsg []byte = []byte("PEER")
 var pubkMsg []byte = []byte("PUBK")
 var nsigMsg []byte = []byte("NSIG")
+var tsxnMsg []byte = []byte("TSXN")
 
 // restAPI() This is the main API that is activated when isCoord == true
-func restAPI(keyCollection *ED25519Keys) {
+func restAPI(keyCollection *ED25519Keys, graph *Graph) {
 	headersCORS := handlers.AllowedHeaders([]string{"Access-Control-Allow-Headers", "Access-Control-Allow-Methods", "Access-Control-Allow-Origin", "Cache-Control", "Content-Security-Policy", "Feature-Policy", "Referrer-Policy", "X-Requested-With"})
 	originsCORS := handlers.AllowedOrigins([]string{
 		"*",
@@ -54,7 +55,7 @@ func restAPI(keyCollection *ED25519Keys) {
 		color.Set(color.FgHiGreen, color.Bold)
 		fmt.Printf("\n[%s] [%s] Peer socket opened!\n", timeStamp(), conn.RemoteAddr())
 		color.Set(color.FgWhite, color.Bold)
-		channelSocketHandler(conn, keyCollection)
+		channelAuthAgent(conn, keyCollection, graph)
 	})
 	if !wantsHTTPS {
 		http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api))
@@ -64,7 +65,7 @@ func restAPI(keyCollection *ED25519Keys) {
 	}
 }
 
-func channelSocketHandler(conn *websocket.Conn, keyCollection *ED25519Keys) {
+func channelAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys, graph *Graph) {
 	for {
 		defer conn.Close()
 		msgType, msg, err := conn.ReadMessage()
@@ -103,31 +104,22 @@ func channelSocketHandler(conn *websocket.Conn, keyCollection *ED25519Keys) {
 				}
 				if !fileExists(whitelistPeerCertFile) {
 					color.Set(color.FgWhite)
-					// fmt.Println("Node Pub Key Received:\n" + pubkey)
-					// fmt.Println("Our Pub Key:\n" + keyCollection.publicKey)
-					// fmt.Println("Our Private Key:\n" + keyCollection.privateKey)
-					// fmt.Printf("\nOur Signed Pubkey: %s\n", keyCollection.signedKey)
-					// hexSig := fmt.Sprintf("%s", keyCollection.signedKey)
 
 					// Sending Coord Pubkey
 					signedNodePubKey := signKey(keyCollection, pubkey)
-					// fmt.Println("Signature:\n" + signedNodePubKey)
 
 					// When a peer is banned, this will trigger when they try to reconnect
 					_ = conn.WriteMessage(msgType, []byte(signedNodePubKey))
-					// handle("", err)
 
 					// Read the request which should be for a pubkey
 					_, coordRespPubKey, _ := conn.ReadMessage()
 					if bytes.HasPrefix(coordRespPubKey, pubkMsg) {
 						conn.WriteMessage(msgType, []byte(keyCollection.publicKey))
-						// fmt.Printf("\nRequest Received: %s", string(coordRespPubKey))
 
 						// Wait for a request that should look like
 						// NSIG + n1 signature
 						_, receivedN1s, _ := conn.ReadMessage()
 						if bytes.HasPrefix(receivedN1s, nsigMsg) {
-							// fmt.Printf("N1:S Received:\n%s", string(receivedN1s))
 							var stringN1S = string(receivedN1s)
 							var trimmedStringRecN1S = strings.TrimRight(stringN1S, "\n")
 							var n1sToHash = []byte(trimmedStringRecN1S)
@@ -158,15 +150,51 @@ func channelSocketHandler(conn *websocket.Conn, keyCollection *ED25519Keys) {
 						}
 
 					} else {
-						// fmt.Printf("Join PubKey %s has incorrect length. PubKey received has a length of %v", string(trimmedPubKey), len(trimmedPubKey))
 						conn.Close()
 						return
 					}
 				} else {
 					var wbPeerMsg = "Welcome back " + pubkey[:8]
 					conn.WriteMessage(1, []byte(wbPeerMsg))
+
+					// Pass the socket to the incoming message parser and invite our new
+					// guest in for some tea
+					incMsgParser(conn, keyCollection, graph)
 				}
 			}
+		}
+	}
+}
+
+func processMsg(msg []byte, graph *Graph) bool {
+	if bytes.HasPrefix(msg, tsxnMsg) {
+		trimMsg := bytes.TrimRight(msg, "\n")
+		dataBytes := bytes.TrimLeft(trimMsg, "TSXN ")
+		data := string(dataBytes)
+		if validJSON(data) {
+			graph.addTx(2, string(data))
+			return true
+		}
+	}
+	return false
+}
+
+func incMsgParser(conn *websocket.Conn, keyCollection *ED25519Keys, graph *Graph) {
+	fmt.Printf("We have reached the tx handler")
+	for {
+		defer conn.Close()
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			color.Set(color.FgHiYellow, color.Bold)
+			fmt.Printf("\n[%s] [%s] socket: %s\n", timeStamp(), conn.RemoteAddr(), err)
+			color.Set(color.FgWhite)
+			break
+		}
+		// processMsg(msg)
+		if processMsg(msg, graph) {
+			color.Set(color.FgHiGreen, color.Bold)
+			fmt.Printf("\n[%s] [%s] Tx Good: %s\n", timeStamp(), conn.RemoteAddr(), err)
+			color.Set(color.FgWhite)
 		}
 	}
 }
@@ -174,10 +202,9 @@ func channelSocketHandler(conn *websocket.Conn, keyCollection *ED25519Keys) {
 // initAPI Check if we are running as a coordinator, if we are, start the API
 func initAPI(keyCollection *ED25519Keys) {
 	if !isCoordinator {
-
-	} else {
-		go restAPI(keyCollection)
+		return
 	}
+	go restAPI(keyCollection, spawnGraph())
 }
 
 // home This is the home route, it can be used as a

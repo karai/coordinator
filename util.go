@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -230,4 +231,9 @@ func locateGraphDir() {
 		err = os.MkdirAll("./graph", 0755)
 		handle("Error locating graph directory: ", err)
 	}
+}
+
+func validJSON(stringToValidate string) bool {
+	var jsonString json.RawMessage
+	return json.Unmarshal([]byte(stringToValidate), &jsonString) == nil
 }

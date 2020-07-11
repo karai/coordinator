@@ -17,24 +17,27 @@ type clientHeader struct {
 	ClientProtocolVersion  string `json:"client_protocol_version"`
 }
 
-func connectChannel(ktx string, pubKey, signedKey string) {
+func connectChannel(ktx string, pubKey, signedKey string) *websocket.Conn {
 	color.Set(color.FgHiCyan, color.Bold)
 	fmt.Printf("\nConnection request with ktx %s", ktx)
 
 	if isCoordinator {
 		color.Set(color.FgHiRed, color.Bold)
 		fmt.Println("This is for nodes running in client mode only.")
+		return nil
 	}
-	if !isCoordinator {
-		// request a websocket connection
-		var conn = requestSocket(ktx, "1")
 
-		// using that connection, attempt to join the channel
-		var joinedChannel = joinChannel(conn, pubKey)
+	// request a websocket connection
+	var conn = requestSocket(ktx, "1")
 
-		// validate channel messages
-		socketValidation(pubKey, signedKey, joinedChannel)
-	}
+	// using that connection, attempt to join the channel
+	var joinedChannel = joinChannel(conn, pubKey)
+
+	// validate channel messages
+	socketValidation(pubKey, signedKey, joinedChannel)
+
+	// return the connection
+	return conn
 }
 
 func joinChannel(conn *websocket.Conn, pubKey string) *websocket.Conn {
@@ -110,6 +113,11 @@ func socketValidation(pubKey, signedKey string, conn *websocket.Conn) {
 					color.Set(color.FgHiBlack, color.Bold)
 					fmt.Printf("%s\n", hashedSigCertResponseNoPrefix)
 					color.Set(color.FgWhite)
+					var pubKeyCertFileName = pubKey + ".cert"
+					if !fileExists(pubKeyCertFileName) {
+						createFile(pubKeyCertFileName)
+					}
+					writeFile(pubKeyCertFileName, hashedSigCertResponseNoPrefix)
 				} else {
 					fmt.Printf("%v is the wrong size\n%s", len(hashedSigCertResponseNoPrefix), hashedSigCertResponseNoPrefix)
 				}
@@ -118,4 +126,10 @@ func socketValidation(pubKey, signedKey string, conn *websocket.Conn) {
 			fmt.Println("\nSomething is very wrong!")
 		}
 	}
+}
+
+func sendV1Transaction(channel, msg string) {
+	conn := requestSocket(channel, "1")
+	_ = conn.WriteMessage(1, []byte(msg))
+
 }
