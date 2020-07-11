@@ -55,7 +55,22 @@ func inputHandler(keyCollection *ED25519Keys) {
 		} else if strings.Compare("print-graph", text) == 0 {
 			openGraph(graphDir)
 		} else if strings.HasPrefix(text, "connect") {
-			connectChannel(strings.TrimPrefix(text, "connect "), keyCollection.publicKey, keyCollection.signedKey)
+			ktxAddressString := strings.TrimPrefix(text, "connect ")
+			if strings.Contains(ktxAddressString, ":") {
+				var justTheDomainPartNotThePort = strings.Split(ktxAddressString, ":")
+				var ktxCertFileName = justTheDomainPartNotThePort[0] + ".cert"
+				if !fileExists(ktxCertFileName) {
+					joinChannel(ktxAddressString, keyCollection.publicKey, keyCollection.signedKey, "")
+				}
+				if fileExists(ktxCertFileName) {
+					isFNG = false
+					joinChannel(ktxAddressString, keyCollection.publicKey, keyCollection.signedKey, ktxCertFileName)
+				}
+
+			}
+			if !strings.Contains(ktxAddressString, ":") {
+				fmt.Printf("\nDid you forget to include the port?\n")
+			}
 		} else if strings.HasPrefix(text, "send") {
 			// strip away the `send` command prefix
 			input := strings.TrimPrefix(text, "send ")

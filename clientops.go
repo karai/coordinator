@@ -17,7 +17,7 @@ type clientHeader struct {
 	ClientProtocolVersion  string `json:"client_protocol_version"`
 }
 
-func connectChannel(ktx string, pubKey, signedKey string) *websocket.Conn {
+func joinChannel(ktx string, pubKey, signedKey, ktxCertFileName string) *websocket.Conn {
 	color.Set(color.FgHiCyan, color.Bold)
 	fmt.Printf("\nConnection request with ktx %s", ktx)
 
@@ -31,21 +31,28 @@ func connectChannel(ktx string, pubKey, signedKey string) *websocket.Conn {
 	var conn = requestSocket(ktx, "1")
 
 	// using that connection, attempt to join the channel
-	var joinedChannel = joinChannel(conn, pubKey)
+	var joinedChannel = sendJoinMsg(conn, pubKey, ktxCertFileName)
 
-	// validate channel messages
-	socketValidation(pubKey, signedKey, joinedChannel)
+	// parse channel messages
+	socketMsgParser(ktx, pubKey, signedKey, joinedChannel)
 
 	// return the connection
 	return conn
 }
 
-func joinChannel(conn *websocket.Conn, pubKey string) *websocket.Conn {
+func sendJoinMsg(conn *websocket.Conn, pubKey, ktxCertFileName string) *websocket.Conn {
 	// create join message
-	joinReq := "JOIN " + pubKey
-
-	// Initial Connection Sends N1:PK to Coord
-	_ = conn.WriteMessage(1, []byte(joinReq))
+	if isFNG {
+		joinReq := "JOIN " + pubKey
+		// Initial Connection Sends N1:PK to Coord
+		_ = conn.WriteMessage(1, []byte(joinReq))
+	}
+	if !isFNG {
+		certString := readFile(ktxCertFileName)
+		rtrnReq := "RTRN " + pubKey + " " + certString
+		// Connection Sends CA:N1:S to Coord
+		_ = conn.WriteMessage(1, []byte(rtrnReq))
+	}
 	return conn
 }
 
@@ -68,7 +75,7 @@ func requestSocket(ktx, protocolVersion string) *websocket.Conn {
 	return conn
 }
 
-func socketValidation(pubKey, signedKey string, conn *websocket.Conn) {
+func socketMsgParser(ktx, pubKey, signedKey string, conn *websocket.Conn) {
 	_, joinResponse, err := conn.ReadMessage()
 	if strings.Contains(string(joinResponse), "Welcome back") {
 		fmt.Println("\nConnected")
@@ -103,9 +110,18 @@ func socketValidation(pubKey, signedKey string, conn *websocket.Conn) {
 				hashedSigCertResponseNoPrefix := string(bytes.TrimLeft(hashedSigCertResponse, "CERT "))
 				// fmt.Println(hashedSigCertResponseNoPrefix)
 				if len(hashedSigCertResponseNoPrefix) == 128 {
+					var justTheDomainPartNotThePort = strings.Split(ktx, ":")
+					var ktxCertFileName = justTheDomainPartNotThePort[0] + ".cert"
+					if !fileExists(ktxCertFileName) {
+						createFile(ktxCertFileName)
+					}
+					writeFile(ktxCertFileName, hashedSigCertResponseNoPrefix)
 					fmt.Printf("\n[%s] [%s] Certificate Granted\n", timeStamp(), conn.RemoteAddr())
+					fmt.Printf("file> ")
+					color.Set(color.FgHiBlack, color.Bold)
+					fmt.Printf("./%s", ktxCertFileName)
 					color.Set(color.FgHiCyan, color.Bold)
-					fmt.Printf("user> ")
+					fmt.Printf("\nuser> ")
 					color.Set(color.FgHiBlack, color.Bold)
 					fmt.Printf("%s\n", pubKey)
 					color.Set(color.FgHiRed, color.Bold)
@@ -113,11 +129,7 @@ func socketValidation(pubKey, signedKey string, conn *websocket.Conn) {
 					color.Set(color.FgHiBlack, color.Bold)
 					fmt.Printf("%s\n", hashedSigCertResponseNoPrefix)
 					color.Set(color.FgWhite)
-					var pubKeyCertFileName = pubKey + ".cert"
-					if !fileExists(pubKeyCertFileName) {
-						createFile(pubKeyCertFileName)
-					}
-					writeFile(pubKeyCertFileName, hashedSigCertResponseNoPrefix)
+
 				} else {
 					fmt.Printf("%v is the wrong size\n%s", len(hashedSigCertResponseNoPrefix), hashedSigCertResponseNoPrefix)
 				}
