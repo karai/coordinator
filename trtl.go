@@ -6,13 +6,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 // menuCreateWallet Create a wallet in the wallet-api container
 func menuCreateWallet() {
-	logrus.Debug("Creating Wallet")
 	url := "http://127.0.0.1:8070/wallet/create"
 	data := []byte(`{"daemonHost": "127.0.0.1", "daemonPort": 11898, "filename": "karai-wallet.wallet", "password": "supersecretpassword"}`)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
@@ -20,12 +17,9 @@ func menuCreateWallet() {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-API-KEY", "pineapples")
 	client := &http.Client{Timeout: time.Second * 10}
-	logrus.Info(req.Header)
 	resp, err := client.Do(req)
 	handle("Error creating wallet: ", err)
 	defer resp.Body.Close()
-	logrus.Info("response Status:", resp.Status)
-	logrus.Info("response Headers:", resp.Header)
 	body, err := ioutil.ReadAll(resp.Body)
 	handle("Error creating wallet: ", err)
 	fmt.Printf("%s\n", body)
@@ -33,7 +27,6 @@ func menuCreateWallet() {
 
 // menuOpenWallet Open a wallet file
 func menuOpenWallet() {
-	logrus.Debug("Opening Wallet")
 	url := "http://127.0.0.1:8070/wallet/open"
 	data := []byte(`{"daemonHost": "127.0.0.1", "daemonPort": 11898, "filename": "karai-wallet.wallet", "password": "supersecretpassword"}`)
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(data))
@@ -41,12 +34,9 @@ func menuOpenWallet() {
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("X-API-KEY", "pineapples")
 	client := &http.Client{Timeout: time.Second * 10}
-	logrus.Info(req.Header)
 	resp, err := client.Do(req)
 	handle("Error opening wallet: ", err)
 	defer resp.Body.Close()
-	logrus.Info("response Status:", resp.Status)
-	logrus.Info("response Headers:", resp.Header)
 	body, err := ioutil.ReadAll(resp.Body)
 	handle("Error opening wallet: ", err)
 	fmt.Printf("%s\n", body)
@@ -75,7 +65,6 @@ func menuGetContainerTransactions() {
 
 // getWalletAPIStatus Get Wallet-API status
 func getWalletAPIStatus() {
-	logrus.Info("[Wallet-API Status]")
 	req, err := http.NewRequest("GET", "http://127.0.0.1:8070/status", nil)
 	handle("Error getting Wallet-API status: ", err)
 	req.Header.Set("X-API-KEY", "pineapples")
@@ -90,7 +79,6 @@ func getWalletAPIStatus() {
 
 // getNodeInfo Get TRTL Node Info
 func getNodeInfo() {
-	logrus.Info("[Node Info]")
 	req, err := http.NewRequest("GET", "http://127.0.0.1:8070/node", nil)
 	handle("Error getting node info: ", err)
 	req.Header.Set("X-API-KEY", "pineapples")
@@ -105,7 +93,6 @@ func getNodeInfo() {
 
 // walletInfoPrimaryAddressBalance Get primary TRTL address balance
 func walletInfoPrimaryAddressBalance() {
-	logrus.Info("[Primary Address]")
 	req, err := http.NewRequest("GET", "http://127.0.0.1:8070/balances", nil)
 	handle("Error getting wallet info primary address: ", err)
 	req.Header.Set("X-API-KEY", "pineapples")

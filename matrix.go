@@ -6,8 +6,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 // publishToMatrix Push events to matrix
@@ -20,12 +18,11 @@ func publishToMatrix(matrixMessage, matrixURL, matrixRoomID, matrixToken string)
 	handle("Error publishing message to matrix: ", err)
 	// req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{Timeout: time.Second * 4}
-	// logrus.Info(req.Header)
 	resp, err := client.Do(req)
 	handle("Error: ", err)
 	defer resp.Body.Close()
-	logrus.Info("response Status:", resp.Status)
-	logrus.Info("response Headers:", resp.Header)
+	fmt.Printf("\nresponse Status: %s", resp.Status)
+	fmt.Printf("\nresponse Headers: %s", resp.Header)
 	body, err := ioutil.ReadAll(resp.Body)
 	handle("Error: ", err)
 	fmt.Printf("%s\n", body)

@@ -11,7 +11,6 @@ import (
 	"github.com/briandowns/spinner"
 	"github.com/fatih/color"
 	externalip "github.com/glendc/go-external-ip"
-	"github.com/sirupsen/logrus"
 )
 
 // revealIP This uses some funky consensus methods to
@@ -23,9 +22,8 @@ func revealIP() string {
 	consensus := externalip.DefaultConsensus(nil, nil)
 	ip, err := consensus.ExternalIP()
 	handle("Something went wrong getting the external IP: ", err)
-	// logrus.Info("Coordinator: ", isCoordinator)
 	if showIP {
-		logrus.Info("External IP: ", ip.String())
+		fmt.Printf("External IP: %s", ip.String())
 	}
 	s.Stop()
 	return ip.String()
@@ -120,14 +118,10 @@ func checkPeerFile() {
 	if _, err := os.Stat(p2pBlacklistDir); os.IsNotExist(err) {
 		os.Mkdir(p2pBlacklistDir, 0700)
 	}
-	// logrus.Info("Checking peer file: " + p2pConfigDir + "/" + p2pConfigFile)
 	if !directoryMissing(p2pConfigDir) {
-		// logrus.Info(p2pConfigDir + " exists")
 		if fileExists(configPeerIDFile) {
-			// logrus.Info(configPeerIDFile + " exists")
 			peerIdentity := readFile(configPeerIDFile)
 			if len(peerIdentity) > 16 {
-				logrus.Debug("Machine identity looks ok")
 				color.Set(color.FgWhite)
 				fmt.Printf("Machine ID:\t")
 				color.Set(color.FgHiBlack)
@@ -138,7 +132,7 @@ func checkPeerFile() {
 				generatePeerID()
 			}
 		} else if !fileExists(configPeerIDFile) {
-			logrus.Warning("File " + configPeerIDFile + " does not exist.")
+			fmt.Printf("\nFile " + configPeerIDFile + " does not exist.")
 			createFile(configPeerIDFile)
 			generatePeerID()
 		}
@@ -150,19 +144,9 @@ func checkPeerFile() {
 // handle Ye Olde Error Handler takes a message and an error code
 func handle(msg string, err error) {
 	if err != nil {
-		logrus.Error(msg, err)
-	}
-}
-
-// announce Tell us when the program is running
-func announce() {
-	if isCoordinator {
-		// if showIP {
-		// 	revealIP()
-		// }
-		logrus.Info("Running on port: ", karaiAPIPort)
-	} else {
-		logrus.Debug("Running as normal user on port: ", karaiAPIPort)
+		color.Set(color.FgHiRed, color.Bold)
+		fmt.Printf("\n%s: %s", msg, err)
+		color.Set(color.FgWhite)
 	}
 }
 
@@ -174,7 +158,6 @@ func createFile(filename string) {
 		handle("", err)
 		defer file.Close()
 	}
-	logrus.Debug("Created file: ", filename)
 }
 
 // writeFile Generic file handler
@@ -185,7 +168,6 @@ func writeFile(filename, textToWrite string) {
 	_, err = file.WriteString(textToWrite)
 	err = file.Sync()
 	handle("", err)
-	logrus.Debug("Text written to file: ", textToWrite)
 }
 
 // writeFileBytes Generic file handler
@@ -196,7 +178,6 @@ func writeFileBytes(filename string, bytesToWrite []byte) {
 	_, err = file.Write(bytesToWrite)
 	err = file.Sync()
 	handle("", err)
-	logrus.Debug("Text written to file: ", bytesToWrite)
 }
 
 // readFile Generic file handler
@@ -215,7 +196,6 @@ func readFile(filename string) string {
 			break
 		}
 	}
-	logrus.Debug("Read from file: ", text)
 	// fmt.Println(string(text))
 	return string(text)
 }
@@ -235,7 +215,6 @@ func readFileBytes(filename string) []byte {
 			break
 		}
 	}
-	logrus.Debug("Read from file: ", text)
 	// fmt.Println(string(text))
 	return text
 }
@@ -248,7 +227,6 @@ func deleteFile(filename string) {
 // locateGraphDir Find graph storage, create if missing.
 func locateGraphDir() {
 	if _, err := os.Stat(graphDir); os.IsNotExist(err) {
-		logrus.Debug("Graph directory does not exist.")
 		err = os.MkdirAll("./graph", 0755)
 		handle("Error locating graph directory: ", err)
 	}
