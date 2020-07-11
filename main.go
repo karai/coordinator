@@ -3,7 +3,6 @@ package main
 // Hello Karai
 func main() {
 	parseFlags()
-	announce()
 	checkPeerFile()
 	keys := generateKeys()
 	locateGraphDir()

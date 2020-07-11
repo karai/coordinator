@@ -16,21 +16,14 @@ type ED25519Keys struct {
 
 func generateKeys() *ED25519Keys {
 	keys := ED25519Keys{}
-
 	pubKey, privKey, err := ed25519.GenerateKey(rand.Reader)
-
 	if err != nil {
 		panic(err)
 	}
-
 	keys.privateKey = hex.EncodeToString(privKey[0:32])
-
 	keys.publicKey = hex.EncodeToString(pubKey)
-
 	signedKey := ed25519.Sign(privKey, pubKey)
-
 	keys.signedKey = hex.EncodeToString(signedKey)
-
 	return &keys
 }
 

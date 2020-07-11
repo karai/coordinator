@@ -17,7 +17,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"github.com/sirupsen/logrus"
 	"golang.org/x/crypto/acme/autocert"
 )
 
@@ -26,9 +25,10 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1024,
 	WriteBufferSize: 1024,
 }
+
+var nodePubKeySignature []byte
 var joinMsg []byte = []byte("JOIN")
 var castMsg []byte = []byte("CAST")
-var nodePubKeySignature []byte
 var peerMsg []byte = []byte("PEER")
 var pubkMsg []byte = []byte("PUBK")
 var nsigMsg []byte = []byte("NSIG")
@@ -57,15 +57,14 @@ func restAPI(keyCollection *ED25519Keys) {
 		channelSocketHandler(conn, keyCollection)
 	})
 	if !wantsHTTPS {
-		logrus.Debug(http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
+		http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api))
 	}
 	if wantsHTTPS {
-		logrus.Debug(http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api)))
+		http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api))
 	}
 }
 
 func channelSocketHandler(conn *websocket.Conn, keyCollection *ED25519Keys) {
-
 	for {
 		defer conn.Close()
 		msgType, msg, err := conn.ReadMessage()
@@ -75,7 +74,7 @@ func channelSocketHandler(conn *websocket.Conn, keyCollection *ED25519Keys) {
 			color.Set(color.FgWhite)
 			break
 		}
-		defer conn.Close()
+		// defer conn.Close()
 		if bytes.HasPrefix(msg, pubkMsg) {
 			conn.WriteMessage(msgType, []byte(keyCollection.publicKey))
 		}
@@ -89,7 +88,7 @@ func channelSocketHandler(conn *websocket.Conn, keyCollection *ED25519Keys) {
 				var regValidate bool
 				regValidate, _ = regexp.MatchString(`[a-f0-9]{64}`, string(trimmedPubKey))
 				if regValidate == false {
-					logrus.Error("Contains illegal characters")
+					fmt.Printf("\nContains illegal characters")
 					conn.Close()
 					return
 				}
@@ -175,7 +174,7 @@ func channelSocketHandler(conn *websocket.Conn, keyCollection *ED25519Keys) {
 // initAPI Check if we are running as a coordinator, if we are, start the API
 func initAPI(keyCollection *ED25519Keys) {
 	if !isCoordinator {
-		logrus.Debug("isCoordinator == false, skipping webserver deployment")
+
 	} else {
 		go restAPI(keyCollection)
 	}

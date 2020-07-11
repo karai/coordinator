@@ -11,12 +11,10 @@ import (
 	"strings"
 
 	"github.com/denisbrodbeck/machineid"
-	"github.com/sirupsen/logrus"
 )
 
 // generatePeerIO uses the machine ID to generate a unique string
 func generatePeerID() string {
-	logrus.Info("generating peer ID")
 	machineID, err := machineid.ProtectedID("1f41d1f36f1f5251f32cfe0f1f924")
 	handle("There was a problem generating machine ID: ", err)
 	fmt.Println(machineID)
@@ -47,7 +45,6 @@ func generatePointer() {
 	if !isCoordinator {
 		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
 	} else {
-		logrus.Debug("Creating a new Karai <=> TRTL pointer")
 		readerKtxIP := bufio.NewReader(os.Stdin)
 		fmt.Print("Enter Karai Coordinator IP: ")
 		ktxIP, _ := readerKtxIP.ReadString('\n')

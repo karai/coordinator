@@ -5,7 +5,7 @@ import "flag"
 // parseFlags This evaluates the flags used when the program was run
 // and assigns the values of those flags according to sane defaults.
 func parseFlags() {
-	flag.StringVar(&matrixToken, "matrixToken", "", "Matrix homeserver token key")
+	flag.StringVar(&matrixToken, "matrixToken", "", "Matrix homeserver token")
 	flag.StringVar(&matrixURL, "matrixURL", "", "Matrix homeserver URL")
 	flag.StringVar(&matrixRoomID, "matrixRoomID", "", "Room ID for matrix publishd events")
 	flag.IntVar(&karaiAPIPort, "apiport", 4200, "Port to run Karai Coordinator API on.")

@@ -80,7 +80,6 @@ func printTx(file string) string {
 
 // hashTx This will compute the tx hash using sha512
 func (graphTx *GraphTx) hashTx() {
-	// logrus.Debug("Hashing a Tx ", graphTx.Hash)
 	data := bytes.Join([][]byte{graphTx.Data, []byte(graphTx.Prev)}, []byte{})
 	hash := sha512.Sum512(data)
 	graphTx.Hash = string(hash[:])
@@ -92,7 +91,6 @@ func (graph *Graph) addTx(txType int, data string) {
 		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
 	} else {
 		// I wonder sometimes if all these debug statements are costing me tx speed.
-		// logrus.Debug("Adding a Tx")
 		prevTx := graph.Transactions[len(graph.Transactions)-1]
 		new := txConstructor(txType, data, []byte(prevTx.Hash))
 		graph.Transactions = append(graph.Transactions, new)
