@@ -17,6 +17,7 @@ type clientHeader struct {
 }
 
 func joinChannel(ktx string, pubKey, signedKey, ktxCertFileName string) *websocket.Conn {
+
 	fmt.Printf(brightcyan+"\nConnection request with ktx %s", ktx)
 
 	if isCoordinator {

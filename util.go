@@ -8,26 +8,7 @@ import (
 	"os"
 	"regexp"
 	"time"
-
-	"github.com/briandowns/spinner"
-	externalip "github.com/glendc/go-external-ip"
 )
-
-// revealIP This uses some funky consensus methods to
-// dial a few servers and get the external IP of the coordinator
-func revealIP() string {
-	s := spinner.New(spinner.CharSets[37], 200*time.Millisecond)
-	s.Start()
-	s.Prefix = "Just a moment..  "
-	consensus := externalip.DefaultConsensus(nil, nil)
-	ip, err := consensus.ExternalIP()
-	handle("Something went wrong getting the external IP: ", err)
-	if showIP {
-		fmt.Printf("External IP: %s", ip.String())
-	}
-	s.Stop()
-	return ip.String()
-}
 
 // ascii Splash logo. We used to have a package for this
 // but it was only for the logo so why not just static-print it?
