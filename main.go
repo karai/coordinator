@@ -6,6 +6,7 @@ func main() {
 	checkPeerFile()
 	keys := generateKeys()
 	locateGraphDir()
+	osCheck()
 	ascii()
 	initAPI(keys)
 	go initConnection(keys.publicKey)
