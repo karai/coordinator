@@ -11,8 +11,6 @@ import (
 	"os"
 	"strconv"
 	"time"
-
-	"github.com/fatih/color"
 )
 
 // Graph This is the structure of the Graph
@@ -196,7 +194,7 @@ func benchmark() {
 			graph.addTx(2, dataString)
 		}
 		end := time.Since(start)
-		fmt.Printf("\n\nTx Legend: %v %v %v\n", color.YellowString("Root"), color.GreenString("Milestone"), color.BlueString("Normal"))
+		fmt.Printf("\n\nTx Legend: %v %v %v\n", brightyellow+"Root", brightgreen+"Milestone", brightcyan+"Normal")
 		for key, transaction := range graph.Transactions {
 			var hash string = fmt.Sprintf("%x", transaction.Hash)
 			var prevHash string = fmt.Sprintf("%x", transaction.Prev)
@@ -208,7 +206,7 @@ func benchmark() {
 				w.WriteString(dataString)
 				w.Flush()
 				// fmt.Printf("\nTx(%x) %x\n", key, transaction.Hash)
-				fmt.Printf("\nTx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
+				fmt.Printf(white+"\nTx("+brightyellow+"%v"+white+" %x\n)", strconv.Itoa(key), transaction.Hash)
 			} else if len(prevHash) > 2 {
 				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.Type) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_prev\": \"" + prevHash + "\",\n\t\"tx_data\": " + string(transaction.Data) + "\n}"
 				f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
@@ -218,13 +216,13 @@ func benchmark() {
 				// Indicate Tx type by color
 				if transaction.Type == 0 {
 					// Root Tx
-					fmt.Printf("Tx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
+					fmt.Printf("Tx(%v) %x\n", strconv.Itoa(key), transaction.Hash)
 				} else if transaction.Type == 1 {
 					// Milestone Tx
-					fmt.Printf("Tx(%v) %x\n", color.GreenString(strconv.Itoa(key)), transaction.Hash)
+					fmt.Printf("Tx(%v) %x\n", strconv.Itoa(key), transaction.Hash)
 				} else if transaction.Type == 2 {
 					// Normal Tx
-					fmt.Printf("Tx(%v) %x\n", color.BlueString(strconv.Itoa(key)), transaction.Hash)
+					fmt.Printf("Tx(%v) %x\n", strconv.Itoa(key), transaction.Hash)
 				}
 			}
 		}
@@ -245,7 +243,7 @@ func spawnChannel() {
 		graph.addTx(2, "[{\"tx_slot\": 3}]")
 		// go txHandler()
 		// Report Txs
-		fmt.Printf("\n\nTx Legend: %v %v %v\n", color.YellowString("Root"), color.GreenString("Milestone"), color.BlueString("Normal"))
+		fmt.Printf("\n\nTx Legend: %v %v %v\n", "Root", "Milestone", "Normal")
 		for key, transaction := range graph.Transactions {
 			var hash string = fmt.Sprintf("%x", transaction.Hash)
 			var prevHash string = fmt.Sprintf("%x", transaction.Prev)
@@ -257,7 +255,7 @@ func spawnChannel() {
 				w.WriteString(dataString)
 				w.Flush()
 				// fmt.Printf("\nTx(%x) %x\n", key, transaction.Hash)
-				fmt.Printf("\nTx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
+				fmt.Printf("\nTx(%v) %x\n", strconv.Itoa(key), transaction.Hash)
 			} else if len(prevHash) > 2 {
 				dataString := "{\n\t\"tx_type\": " + strconv.Itoa(transaction.Type) + ",\n\t\"tx_hash\": \"" + hash + "\",\n\t\"tx_prev\": \"" + prevHash + "\",\n\t\"tx_data\": " + string(transaction.Data) + "\n}"
 				f, _ := os.Create(graphDir + "/" + "Tx_" + strconv.Itoa(key) + ".json")
@@ -267,13 +265,13 @@ func spawnChannel() {
 				// Indicate Tx type by color
 				if transaction.Type == 0 {
 					// Root Tx
-					fmt.Printf("Tx(%v) %x\n", color.YellowString(strconv.Itoa(key)), transaction.Hash)
+					fmt.Printf(brightgreen+"Tx(%v) %x\n", strconv.Itoa(key), transaction.Hash)
 				} else if transaction.Type == 1 {
 					// Milestone Tx
-					fmt.Printf("Tx(%v) %x\n", color.GreenString(strconv.Itoa(key)), transaction.Hash)
+					fmt.Printf(brightyellow+"Tx(%v) %x\n", strconv.Itoa(key), transaction.Hash)
 				} else if transaction.Type == 2 {
 					// Normal Tx
-					fmt.Printf("Tx(%v) %x\n", color.BlueString(strconv.Itoa(key)), transaction.Hash)
+					fmt.Printf(white+"Tx(%v) %x\n", strconv.Itoa(key), transaction.Hash)
 				}
 			}
 		}

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/briandowns/spinner"
-	"github.com/fatih/color"
 	externalip "github.com/glendc/go-external-ip"
 )
 
@@ -35,26 +34,22 @@ func revealIP() string {
 func ascii() {
 	fmt.Printf("\n")
 	if isCoordinator {
-		color.Set(color.FgRed, color.Bold)
+		fmt.Printf(brightred)
 	}
 	if !isCoordinator {
-		color.Set(color.FgCyan, color.Bold)
+		fmt.Printf(brightcyan)
 	}
 	fmt.Printf("|   _   _  _  .\n")
 	fmt.Printf("|( (_| |  (_| |\n")
-	color.Set(color.FgHiRed, color.Bold)
-	fmt.Println(semverInfo())
+	fmt.Println(red + semverInfo())
 }
 
 // printLicense Print the license for the user
 func printLicense() {
-	fmt.Printf(color.GreenString("\n"+appName+" v"+semverInfo()) + color.WhiteString(" by "+appDev))
-	color.Set(color.FgGreen)
-	fmt.Println("\n" + appRepository + "\n" + appURL + "\n")
-	color.Set(color.FgHiWhite)
-	fmt.Println("\nMIT License\nCopyright (c) 2020-2021 RockSteady, TurtleCoin Developers")
-	color.Set(color.FgHiBlack)
-	fmt.Println("\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in allcopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.")
+	fmt.Printf(brightgreen + "\n" + appName + " v" + semverInfo() + white + " by " + appDev)
+	fmt.Println(brightgreen + "\n" + appRepository + "\n" + appURL + "\n")
+	fmt.Println(brightwhite + "\nMIT License\nCopyright (c) 2020-2021 RockSteady, TurtleCoin Developers")
+	fmt.Println(brightblack + "\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in allcopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.")
 	fmt.Println()
 }
 
@@ -123,11 +118,8 @@ func checkPeerFile() {
 		if fileExists(configPeerIDFile) {
 			peerIdentity := readFile(configPeerIDFile)
 			if len(peerIdentity) > 16 {
-				color.Set(color.FgWhite)
-				fmt.Printf("Machine ID:\t")
-				color.Set(color.FgHiBlack)
+				fmt.Printf(white + "Machine ID:\t" + brightblack)
 				fmt.Printf("%s", peerIdentity)
-				// TODO ADD MORE VALIDATION
 			} else if len(peerIdentity) < 16 {
 				deleteFile(configPeerIDFile)
 				generatePeerID()
@@ -145,9 +137,7 @@ func checkPeerFile() {
 // handle Ye Olde Error Handler takes a message and an error code
 func handle(msg string, err error) {
 	if err != nil {
-		color.Set(color.FgHiRed, color.Bold)
-		fmt.Printf("\n%s: %s", msg, err)
-		color.Set(color.FgWhite)
+		fmt.Printf(brightred+"\n%s: %s"+white, msg, err)
 	}
 }
 
