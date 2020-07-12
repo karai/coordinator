@@ -32,3 +32,6 @@ config/p2p/peer.id
 builds
 builds/
 ./builds
+*.cert
+*.pub
+*.key
