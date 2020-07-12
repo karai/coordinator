@@ -7,6 +7,5 @@ require (
 	github.com/gorilla/handlers v1.4.2
 	github.com/gorilla/mux v1.7.4
 	github.com/gorilla/websocket v1.4.2
-	github.com/ipfs/go-ipfs-api v0.1.0
 	golang.org/x/crypto v0.0.0-20200709230013-948cd5f35899
 )
