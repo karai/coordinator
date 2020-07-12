@@ -13,7 +13,6 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fatih/color"
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -53,9 +52,7 @@ func restAPI(keyCollection *ED25519Keys, graph *Graph) {
 		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 		conn, _ := upgrader.Upgrade(w, r, nil)
 		defer conn.Close()
-		color.Set(color.FgHiGreen, color.Bold)
-		fmt.Printf("\n[%s] [%s] Peer socket opened!\n", timeStamp(), conn.RemoteAddr())
-		color.Set(color.FgWhite, color.Bold)
+		fmt.Printf(brightgreen+"\n[%s] [%s] Peer socket opened!\n"+white, timeStamp(), conn.RemoteAddr())
 		channelAuthAgent(conn, keyCollection, graph)
 	})
 	if !wantsHTTPS {
@@ -71,9 +68,7 @@ func channelAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys, graph *G
 		defer conn.Close()
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
-			color.Set(color.FgHiYellow, color.Bold)
-			fmt.Printf("\n[%s] [%s] Peer socket closed!\n", timeStamp(), conn.RemoteAddr())
-			color.Set(color.FgWhite)
+			fmt.Printf(brightyellow+"\n[%s] [%s] Peer socket closed!\n"+white, timeStamp(), conn.RemoteAddr())
 			break
 		}
 		if bytes.HasPrefix(msg, rtrnMsg) {
@@ -127,8 +122,6 @@ func channelAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys, graph *G
 					return
 				}
 				if !fileExists(whitelistPeerCertFile) {
-					color.Set(color.FgWhite)
-
 					// Sending Coord Pubkey
 					signedNodePubKey := signKey(keyCollection, pubkey)
 
@@ -153,18 +146,11 @@ func channelAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys, graph *G
 							var certMsg = "CERT " + signedHashOfN1s
 							var trimmedCertMsg = strings.TrimLeft(certMsg, " ")
 							conn.WriteMessage(msgType, []byte(trimmedCertMsg))
-
-							color.Set(color.FgHiGreen, color.Bold)
-							fmt.Printf("[%s] [%s] Certificate Granted!\n", timeStamp(), conn.RemoteAddr())
-							color.Set(color.FgHiCyan, color.Bold)
-							fmt.Printf("user> ")
-							color.Set(color.FgHiBlack, color.Bold)
-							fmt.Printf("%s\n", pubkey)
-							color.Set(color.FgHiRed, color.Bold)
-							fmt.Printf("cert> ")
-							color.Set(color.FgHiBlack, color.Bold)
-							fmt.Printf("%s\n", signedHashOfN1s)
-							color.Set(color.FgWhite)
+							fmt.Printf(brightgreen+"[%s] [%s] Certificate Granted!\n", timeStamp(), conn.RemoteAddr())
+							fmt.Printf(brightcyan + "user> ")
+							fmt.Printf(brightblack+"%s\n", pubkey)
+							fmt.Printf(brightred + "cert> ")
+							fmt.Printf(brightblack+"%s\n"+white, signedHashOfN1s)
 							// Does a peer file for this node exist?
 							var peerCertFile = p2pConfigDir + "/whitelist/" + pubkey + ".cert"
 							if !fileExists(peerCertFile) {
@@ -209,16 +195,12 @@ func incMsgParser(conn *websocket.Conn, keyCollection *ED25519Keys, graph *Graph
 		defer conn.Close()
 		_, msg, err := conn.ReadMessage()
 		if err != nil {
-			color.Set(color.FgHiYellow, color.Bold)
-			fmt.Printf("\n[%s] [%s] socket: %s\n", timeStamp(), conn.RemoteAddr(), err)
-			color.Set(color.FgWhite)
+			fmt.Printf(brightyellow+"\n[%s] [%s] socket: %s\n"+white, timeStamp(), conn.RemoteAddr(), err)
 			break
 		}
 		// processMsg(msg)
 		if processMsg(msg, graph) {
-			color.Set(color.FgHiGreen, color.Bold)
-			fmt.Printf("\n[%s] [%s] Tx Good: %s\n", timeStamp(), conn.RemoteAddr(), err)
-			color.Set(color.FgWhite)
+			fmt.Printf(brightgreen+"\n[%s] [%s] Tx Good: %s\n"+white, timeStamp(), conn.RemoteAddr(), err)
 		}
 	}
 }

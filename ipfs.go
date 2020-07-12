@@ -8,7 +8,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/fatih/color"
 	shell "github.com/ipfs/go-ipfs-api"
 )
 
@@ -28,12 +27,11 @@ func createCID() {
 // generate IPFS Content IDs for each file given to it.
 func createCIDforTx(file string) string {
 	dat, _ := ioutil.ReadFile(file)
-	color.Set(color.FgBlack, color.Bold)
-	fmt.Print(string(dat) + "\n")
+	fmt.Print(brightblack + string(dat) + "\n")
 	sh := shell.NewShell("localhost:5001")
 	cid, err := sh.Add(strings.NewReader(string(dat)))
 	handle("Something went wrong pushing the tx: ", err)
-	fmt.Printf(color.GreenString("%v %v\n%v %v", color.YellowString("Tx:"), color.GreenString(file), color.YellowString("CID: "), color.GreenString(cid)))
+	fmt.Printf(brightgreen+"%v %v\n%v %v", brightyellow+"Tx:", brightgreen+file, brightyellow+"CID: ", brightgreen+cid)
 	appendGraphCID(cid)
 	return cid
 }
@@ -52,7 +50,7 @@ func appendGraphCID(cid string) {
 		handle("Something went wrong appending the graph CID: ", err)
 		defer hashfile.Close()
 		if fileContainsString(cid, hashDat) {
-			fmt.Printf("%v", color.RedString("\nDuplicate! Skipping...\n"))
+			fmt.Printf("%v", brightred+"\nDuplicate! Skipping...\n")
 		} else {
 			hashfile.WriteString(cid + "\n")
 		}

@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"os"
 	"strings"
-
-	"github.com/fatih/color"
 )
 
 // Split helps me split up the args after a command
@@ -26,8 +24,8 @@ type v1Tx struct {
 func inputHandler(keyCollection *ED25519Keys) {
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		fmt.Printf("\n%v%v%v\n", color.WhiteString("Type '"), color.GreenString("menu"), color.WhiteString("' to view a list of commands"))
-		fmt.Print(color.GreenString("-> "))
+		fmt.Printf("\n%v%v%v\n", white+"Type '", brightgreen+"menu", white+"' to view a list of commands")
+		fmt.Print(white + "-> ")
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSpace(text)
 		if strings.Compare("help", text) == 0 {
@@ -180,17 +178,13 @@ func menu() {
 	}
 
 	for _, opt := range menuOptions {
-		color.Set(color.FgHiGreen)
-		fmt.Println("\n" + opt)
-		// if opt == "CHANNEL_OPTIONS" && !isCoordinator {
-		// 	continue
-		// }
-		for colour, options := range menuData[opt] {
-			switch colour {
+		fmt.Println(brightgreen + "\n" + opt)
+		for menuOptionColor, options := range menuData[opt] {
+			switch menuOptionColor {
 			case 0:
-				color.Set(color.FgHiWhite)
+				fmt.Printf(brightwhite)
 			case 1:
-				color.Set(color.FgHiBlack)
+				fmt.Printf(brightblack)
 			}
 			for _, message := range options {
 				fmt.Println(message)
