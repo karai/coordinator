@@ -44,8 +44,8 @@ func inputHandler(keyCollection *ED25519Keys) {
 			menuOpenWallet()
 		} else if strings.Compare("transaction-history", text) == 0 {
 			menuGetContainerTransactions()
-		} else if strings.Compare("push-graph", text) == 0 {
-			createCID()
+			// } else if strings.Compare("push-graph", text) == 0 {
+			// createCID()
 		} else if strings.Compare("open-wallet-info", text) == 0 {
 			menuOpenWalletInfo()
 		} else if strings.Compare("benchmark", text) == 0 {
