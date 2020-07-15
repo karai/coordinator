@@ -1,5 +1,7 @@
 package main
 
+import "github.com/gorilla/websocket"
+
 // Attribution constants
 const appName = "go-karai"
 const appDev = "The TurtleCoin Developers"
@@ -9,19 +11,29 @@ const appRepository = "https://github.com/karai/go-karai"
 const appURL = "https://karai.io"
 
 // File & folder constants
-const credentialsFile = "private_credentials.karai"
 const currentJSON = "./config/milestone.json"
 const graphDir = "./graph"
-const hashDat = graphDir + "/ipfs-hash-list.dat"
 const p2pConfigDir = "./config/p2p"
 const p2pWhitelistDir = p2pConfigDir + "/whitelist"
 const p2pBlacklistDir = p2pConfigDir + "/blacklist"
 const p2pConfigFile = "peer.id"
-const configPeerIDFile = p2pConfigDir + "/" + p2pConfigFile
-const pubKeyFilePath = "pub.key"
-const privKeyFilePath = "priv.key"
+const configPeerIDFile = p2pConfigDir + "/" + "peer.id"
+const pubKeyFilePath = p2pConfigDir + "/" + "pub.key"
+const privKeyFilePath = p2pConfigDir + "/" + "priv.key"
+const signedKeyFilePath = p2pConfigDir + "/" + "signed.key"
+const selfCertFilePath = p2pConfigDir + "/" + "self.cert"
 
 // Coordinator values
+var nodePubKeySignature []byte
+var joinMsg []byte = []byte("JOIN")
+var ncasMsg []byte = []byte("NCAS")
+var capkMsg []byte = []byte("CAPK")
+var certMsg []byte = []byte("CERT")
+var peerMsg []byte = []byte("PEER")
+var pubkMsg []byte = []byte("PUBK")
+var nsigMsg []byte = []byte("NSIG")
+var tsxnMsg []byte = []byte("TSXN")
+var rtrnMsg []byte = []byte("RTRN")
 var isCoordinator bool = false
 var wantsHTTPS bool = false
 var showIP bool = false
@@ -29,8 +41,14 @@ var karaiAPIPort int
 var karaiP2PPort int
 var p2pPeerID string
 var sslDomain = "example.com"
+var upgrader = websocket.Upgrader{
+	EnableCompression: true,
+	ReadBufferSize:    1024,
+	WriteBufferSize:   1024,
+}
 
 // Client Values
+var trimmedPubKey string
 var isFNG = true
 
 // Client Header

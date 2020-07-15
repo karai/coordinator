@@ -82,10 +82,10 @@ func timeStamp() string {
 	return current.Format("2006-01-02 15:04:05")
 }
 
-// checkPeerFile Check if p2p directory exists, if it does then check for a
+// initPeerLists Check if p2p directory exists, if it does then check for a
 // peer file, if it is not there we generate one, then we open it and see if
 // it conforms to what we expect, if it does then announce the peer identity.
-func checkPeerFile() {
+func initPeerLists() {
 	if _, err := os.Stat(p2pConfigDir); os.IsNotExist(err) {
 		os.Mkdir(p2pConfigDir, 0700)
 	}

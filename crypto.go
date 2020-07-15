@@ -12,6 +12,23 @@ type ED25519Keys struct {
 	publicKey  string
 	privateKey string
 	signedKey  string
+	selfCert   string
+}
+
+func initKeys() *ED25519Keys {
+	if !fileExists(privKeyFilePath) {
+		generateKeys()
+	}
+	keys := ED25519Keys{}
+	keyspublicKey := readFile(pubKeyFilePath)
+	keysprivateKey := readFile(privKeyFilePath)
+	keyssignedKey := readFile(signedKeyFilePath)
+	keysselfCert := readFile(selfCertFilePath)
+	keys.publicKey = keyspublicKey[:64]
+	keys.privateKey = keysprivateKey[:64]
+	keys.signedKey = keyssignedKey[:64]
+	keys.selfCert = keysselfCert[:64]
+	return &keys
 }
 
 func generateKeys() *ED25519Keys {
@@ -24,6 +41,15 @@ func generateKeys() *ED25519Keys {
 	keys.publicKey = hex.EncodeToString(pubKey)
 	signedKey := ed25519.Sign(privKey, pubKey)
 	keys.signedKey = hex.EncodeToString(signedKey)
+	keys.selfCert = keys.publicKey + keys.signedKey
+	createFile(pubKeyFilePath)
+	createFile(privKeyFilePath)
+	createFile(signedKeyFilePath)
+	createFile(selfCertFilePath)
+	writeFile(pubKeyFilePath, keys.publicKey[:64])
+	writeFile(privKeyFilePath, keys.privateKey[:64])
+	writeFile(signedKeyFilePath, keys.signedKey[:64])
+	writeFile(selfCertFilePath, keys.selfCert[:64])
 	return &keys
 }
 

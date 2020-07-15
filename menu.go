@@ -58,36 +58,16 @@ func inputHandler(keyCollection *ED25519Keys) {
 				var justTheDomainPartNotThePort = strings.Split(ktxAddressString, ":")
 				var ktxCertFileName = justTheDomainPartNotThePort[0] + ".cert"
 				if !fileExists(ktxCertFileName) {
-					joinChannel(ktxAddressString, keyCollection.publicKey, keyCollection.signedKey, "")
+					joinChannel(ktxAddressString, keyCollection.publicKey, keyCollection.signedKey, "", keyCollection)
 				}
 				if fileExists(ktxCertFileName) {
 					isFNG = false
-					joinChannel(ktxAddressString, keyCollection.publicKey, keyCollection.signedKey, ktxCertFileName)
+					joinChannel(ktxAddressString, keyCollection.publicKey, keyCollection.signedKey, ktxCertFileName, keyCollection)
 				}
 
 			}
 			if !strings.Contains(ktxAddressString, ":") {
 				fmt.Printf("\nDid you forget to include the port?\n")
-			}
-		} else if strings.HasPrefix(text, "send") {
-			// strip away the `send` command prefix
-			input := strings.TrimPrefix(text, "send ")
-
-			// split up the words after the prefix
-			args := strings.FieldsFunc(input, Split)
-
-			// form an array conforming to our v1 tx type
-			tx := v1Tx{args[0], args[1]}
-
-			// extend some data to vars
-			channel := fmt.Sprintf(tx.channel)
-			msg := fmt.Sprintf(tx.msg)
-
-			// send the v1 transaction if the json is valid
-			if validJSON(msg) {
-				sendV1Transaction(channel, msg)
-			} else {
-				fmt.Printf("\nYour transaction %s was not interpreted as valid JSON. ", msg)
 			}
 		} else if strings.HasPrefix(text, "ban ") {
 			bannedPeer := strings.TrimPrefix(text, "ban ")
@@ -122,6 +102,26 @@ func inputHandler(keyCollection *ED25519Keys) {
 	}
 }
 
+//else if strings.HasPrefix(text, "send") {
+// strip away the `send` command prefix
+//input := strings.TrimPrefix(text, "send ")
+
+// // split up the words after the prefix
+// args := strings.FieldsFunc(input, Split)
+
+// // form an array conforming to our v1 tx type
+// tx := v1Tx{args[0], args[1], args[2], args[3], args[4]}
+
+// // extend some data to vars
+// channel := fmt.Sprintf(tx.channel)
+// msg := fmt.Sprintf(tx.msg)
+
+// send the v1 transaction if the json is valid
+// if validJSON(input) {
+// 	sendV1Transaction(input, &websocket.Conn{})
+// } else {
+// 	fmt.Printf("\nYour transaction %s was not interpreted as valid JSON. ")
+// }
 // menu This is the body of text printed when the user
 // types 'help', 'menu' or any undefined input.
 func menu() {
