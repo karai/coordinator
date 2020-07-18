@@ -8,7 +8,7 @@ jobs:
     test:
         strategy:
             matrix:
-                go-version: [1.13.x, 1.14.x]
+                go-version: [1.13.x, 1.14.5]
                 platform: [ubuntu-latest, macos-latest, windows-latest]
         runs-on: ${{ matrix.platform }}
         steps:
@@ -50,7 +50,7 @@ jobs:
                   asset_name: ${{ steps.before_deploy.outputs.file_name }}
                   asset_content_type: application/octet-stream
             - name: Upload To GH Artifacts
-              if: matrix.go-version == '1.14.x'
+              if: matrix.go-version == '1.14.5'
               uses: actions/upload-artifact@v1
               with:
                   name: ${{ steps.before_deploy.outputs.artifact_name }}
