@@ -16,7 +16,6 @@ import (
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
-	"golang.org/x/crypto/acme/autocert"
 )
 
 // restAPI() This is the main API that is activated when isCoord == true
@@ -32,7 +31,6 @@ func restAPI(keyCollection *ED25519Keys, graph *Graph) {
 	api.HandleFunc("/peer", returnPeerID).Methods(http.MethodGet)
 	api.HandleFunc("/version", returnVersion).Methods(http.MethodGet)
 	api.HandleFunc("/transactions", returnTransactions).Methods(http.MethodGet)
-	api.HandleFunc("/transaction/send", transactionHandler).Methods(http.MethodPost)
 	api.HandleFunc("/channel", func(w http.ResponseWriter, r *http.Request) {
 		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 		conn, _ := upgrader.Upgrade(w, r, nil)
@@ -40,12 +38,12 @@ func restAPI(keyCollection *ED25519Keys, graph *Graph) {
 		fmt.Printf(brightgreen+"\n[%s] [%s] Peer socket opened!\n"+white, timeStamp(), conn.RemoteAddr())
 		socketAuthAgent(conn, keyCollection, graph)
 	})
-	if !wantsHTTPS {
+	// if !wantsHTTPS {
 		http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api))
-	}
-	if wantsHTTPS {
-		http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api))
-	}
+	// }
+	// if wantsHTTPS {
+	// 	http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api))
+	// }
 }
 
 func socketAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys, graph *Graph) {
@@ -146,14 +144,17 @@ func socketAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys, graph *Gr
 
 func txParser(msg []byte, graph *Graph) bool {
 	if bytes.HasPrefix(msg, tsxnMsg) {
+		fmt.Printf("transaction found: %s", string(msg))
 		trimMsg := bytes.TrimRight(msg, "\n")
-		dataBytes := bytes.TrimLeft(trimMsg, "TSXN ")
+		dataBytes := bytes.TrimLeft(trimMsg, "SEND ")
 		data := string(dataBytes)
-		if validJSON(data) {
+		if zValidJSON(data) {
 			graph.addTx(2, string(data))
 			return true
 		}
+		fmt.Printf("MSG Error: %s", string(msg))
 	}
+	fmt.Printf("MSG Error: %s", string(msg))
 	return false
 }
 
@@ -168,6 +169,8 @@ func trustedSessionParser(conn *websocket.Conn, keyCollection *ED25519Keys, grap
 		}
 		if txParser(msg, graph) {
 			fmt.Printf(brightgreen+"\n[%s] [%s] Tx Good: %s\n"+white, timeStamp(), conn.RemoteAddr(), err)
+		} else {
+			fmt.Printf("\n Oh no, something has gone very wrong..")
 		}
 	}
 }
@@ -186,14 +189,6 @@ func home(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Hello " + appName))
-}
-
-// transactionHandler When a transaction is sent from a client,
-// it goes to the CC first. The CC should then triage and
-// validate that transaction, timestamp it and append to a subgraph
-func transactionHandler(w http.ResponseWriter, r *http.Request) {
-	// TODO: triage transactions
-	// this should work hand in hand with subgraphConstructor
 }
 
 // notfound when an API route is unrecognized, we should reply with
