@@ -32,10 +32,10 @@ var certMsg []byte = []byte("CERT")
 var peerMsg []byte = []byte("PEER")
 var pubkMsg []byte = []byte("PUBK")
 var nsigMsg []byte = []byte("NSIG")
-var tsxnMsg []byte = []byte("TSXN")
+var tsxnMsg []byte = []byte("SEND")
 var rtrnMsg []byte = []byte("RTRN")
 var isCoordinator bool = false
-var wantsHTTPS bool = false
+// var wantsHTTPS bool = false
 var showIP bool = false
 var karaiAPIPort int
 var karaiP2PPort int
@@ -50,6 +50,7 @@ var upgrader = websocket.Upgrader{
 // Client Values
 var trimmedPubKey string
 var isFNG = true
+var isTrusted = false
 
 // Client Header
 var clientHeaderAppName string = appName

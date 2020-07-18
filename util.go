@@ -82,6 +82,11 @@ func timeStamp() string {
 	return current.Format("2006-01-02 15:04:05")
 }
 
+// Split helps me split up the args after a command
+func Split(r rune) bool {
+	return r == ':' || r == '.'
+}
+
 // initPeerLists Check if p2p directory exists, if it does then check for a
 // peer file, if it is not there we generate one, then we open it and see if
 // it conforms to what we expect, if it does then announce the peer identity.
@@ -206,4 +211,15 @@ func locateGraphDir() {
 func validJSON(stringToValidate string) bool {
 	var jsonString json.RawMessage
 	return json.Unmarshal([]byte(stringToValidate), &jsonString) == nil
+}
+
+func zValidJSON(stringToValidate string) bool {
+	var jsonData map[string]string
+	err := json.Unmarshal([]byte(stringToValidate), &jsonData)
+	if err == nil {
+		fmt.Printf("\nJSON is valid")
+		return true
+	}
+	fmt.Printf("\nJSON is NOT valid: %s", stringToValidate)
+	return false
 }
