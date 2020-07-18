@@ -1,0 +1,57 @@
+on:
+    push:
+    pull_request:
+    release:
+        types: [published]
+name: Build
+jobs:
+    test:
+        strategy:
+            matrix:
+                go-version: [1.10.x, 1.11.x, 1.12.x, 1.13.x, 1.14.5, 1.x.x]
+                platform: [ubuntu-latest, macos-latest, windows-latest]
+        runs-on: ${{ matrix.platform }}
+        steps:
+            - name: Install Go
+              uses: actions/setup-go@v1
+              with:
+                  go-version: ${{ matrix.go-version }}
+            - name: Checkout code
+              uses: actions/checkout@v2
+            - name: Build
+              run: |
+                  mkdir bin
+                  go get -v -t -d ./...
+                  go build -gcflags="-e" -o bin
+            - name: Prepare To Deploy
+              id: before_deploy
+              shell: bash
+              env:
+                  TAG: ${{ github.ref }}
+                  COMMIT_SHA: ${{ github.sha }}
+                  LABEL: ${{ matrix.platform }}
+              run: |
+                  if [[ "${TAG:5:4}" == "tags" ]]; then export TAG=${TAG:10}; else export TAG=${COMMIT_SHA}; fi
+                  rm -rf go-karai-${TAG}
+                  mkdir go-karai-${TAG}
+                  cp bin/* go-karai-${TAG}
+                  tar cvfz go-karai-${LABEL}-${TAG}.tar.gz go-karai-${TAG}/
+                  echo ::set-output name=binary_path::go-karai-${TAG}
+                  echo ::set-output name=artifact_name::go-karai-${LABEL}-${TAG}
+                  echo ::set-output name=file_name::go-karai-${LABEL}-${TAG}.tar.gz
+            - name: Upload To GH Release
+              if: github.event_name == 'release' && github.repository == 'karai/go-karai' && matrix.go-version == '1.14.x'
+              uses: actions/upload-release-asset@v1
+              env:
+                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+              with:
+                  upload_url: ${{ github.event.release.upload_url }}
+                  asset_path: ${{ steps.before_deploy.outputs.file_name }}
+                  asset_name: ${{ steps.before_deploy.outputs.file_name }}
+                  asset_content_type: application/octet-stream
+            - name: Upload To GH Artifacts
+              if: matrix.go-version == '1.14.x'
+              uses: actions/upload-artifact@v1
+              with:
+                  name: ${{ steps.before_deploy.outputs.artifact_name }}
+                  path: ./${{ steps.before_deploy.outputs.binary_path }}
