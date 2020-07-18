@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"net/url"
+	"os"
 	"strings"
 
 	"github.com/gorilla/websocket"
@@ -36,10 +38,13 @@ func joinChannel(ktx, pubKey, signedKey, ktxCertFileName string, keyCollection *
 }
 
 func stateYourBusiness(conn *websocket.Conn, pubKey string) *websocket.Conn {
+
+	// new users should send JOIN with the pubkey
 	if isFNG {
 		joinReq := "JOIN " + pubKey[:64]
 		_ = conn.WriteMessage(1, []byte(joinReq))
 	}
+	// returning users should send RTRN and the signed CA cert
 	if !isFNG {
 		certString := readFile(selfCertFilePath)
 		rtrnReq := "RTRN " + pubKey[:64] + " " + certString
@@ -60,8 +65,9 @@ func socketMsgParser(ktx, pubKey, signedKey string, conn *websocket.Conn, keyCol
 	handle("There was a problem reading the socket: ", err)
 	if strings.HasPrefix(string(joinResponse), "WCBK") {
 		fmt.Printf("\nConnected to %s", ktx)
-		fmt.Printf("\nType \"send %s json-object\" to send a transaction.", ktx)
-
+		fmt.Printf("\nType \"send <JSON>\" to send a transaction.")
+		isTrusted = true
+		sendHandler(conn, keyCollection)
 	}
 	if strings.Contains(string(joinResponse), string(capkMsg)) {
 		convertjoinResponseString := string(joinResponse)
@@ -88,4 +94,27 @@ func socketMsgParser(ktx, pubKey, signedKey string, conn *websocket.Conn, keyCol
 
 func sendV1Transaction(msg string, conn *websocket.Conn) {
 	_ = conn.WriteMessage(1, []byte(msg))
+}
+
+// sendHandler This is a basic input loop that listens for
+// a few words that correspond to functions in the app. When
+// a command isn't understood, it displays the help menu and
+// returns to listening to input.
+func sendHandler(conn *websocket.Conn, keyCollection *ED25519Keys) {
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		// fmt.Printf("\n%v%v%v\n", white+"Type '", brightgreen+"menu", white+"' to view a list of trusted commands")
+		fmt.Print(brightpurple + "TX> ")
+		text, _ := reader.ReadString('\n')
+		text = strings.TrimSpace(text)
+		if strings.Compare("help", text) == 0 {
+			menu()
+		} else if strings.Compare("?", text) == 0 {
+			menu()
+		} else if strings.Compare("send", text) == 0 {
+			txBody := strings.TrimPrefix(text, "SEND ")
+			fmt.Printf("client sending: %s", txBody)
+			sendV1Transaction(txBody, conn)
+		}
+	}
 }

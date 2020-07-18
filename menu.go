@@ -7,11 +7,6 @@ import (
 	"strings"
 )
 
-// Split helps me split up the args after a command
-func Split(r rune) bool {
-	return r == ':' || r == '.'
-}
-
 type v1Tx struct {
 	channel string
 	msg     string
@@ -44,8 +39,6 @@ func inputHandler(keyCollection *ED25519Keys) {
 			menuOpenWallet()
 		} else if strings.Compare("transaction-history", text) == 0 {
 			menuGetContainerTransactions()
-			// } else if strings.Compare("push-graph", text) == 0 {
-			// createCID()
 		} else if strings.Compare("open-wallet-info", text) == 0 {
 			menuOpenWalletInfo()
 		} else if strings.Compare("benchmark", text) == 0 {
@@ -102,28 +95,6 @@ func inputHandler(keyCollection *ED25519Keys) {
 	}
 }
 
-//else if strings.HasPrefix(text, "send") {
-// strip away the `send` command prefix
-//input := strings.TrimPrefix(text, "send ")
-
-// // split up the words after the prefix
-// args := strings.FieldsFunc(input, Split)
-
-// // form an array conforming to our v1 tx type
-// tx := v1Tx{args[0], args[1], args[2], args[3], args[4]}
-
-// // extend some data to vars
-// channel := fmt.Sprintf(tx.channel)
-// msg := fmt.Sprintf(tx.msg)
-
-// send the v1 transaction if the json is valid
-// if validJSON(input) {
-// 	sendV1Transaction(input, &websocket.Conn{})
-// } else {
-// 	fmt.Printf("\nYour transaction %s was not interpreted as valid JSON. ")
-// }
-// menu This is the body of text printed when the user
-// types 'help', 'menu' or any undefined input.
 func menu() {
 	menuOptions := []string{"LAUNCH_PARAMETERS", "CHANNEL_OPTIONS", "WALLET_API_OPTIONS", "KARAI_OPTIONS", "GENERAL_OPTIONS"}
 	menuData := map[string][][]string{

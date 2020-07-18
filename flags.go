@@ -12,7 +12,7 @@ func parseFlags() {
 	flag.IntVar(&karaiP2PPort, "p2pport", 4201, "Port to listen for P2P messages on.")
 	flag.BoolVar(&isCoordinator, "coordinator", false, "Run as coordinator.")
 	flag.BoolVar(&wantsMatrix, "matrix", false, "Enable Matrix functions. Requires -matrixToken, -matrixURL, and -matrixRoomID")
-	flag.BoolVar(&wantsHTTPS, "https", false, "Use HTTPS for API")
+	// flag.BoolVar(&wantsHTTPS, "https", false, "Use HTTPS for API")
 	// flag.BoolVar(&showIP, "showip", false, "Show IP")
 	flag.Parse()
 }

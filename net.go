@@ -2,34 +2,31 @@ package main
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io/ioutil"
 	"net"
 	"os"
-	"strconv"
 	"strings"
-	"time"
 )
 
-func p2pTCPDialer(ip, port, message string, pubKey string) {
-	var dialer net.Dialer
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	defer cancel()
-	connection, _ := dialer.DialContext(ctx, "tcp", ip+":"+port)
-	connection.Close()
-}
+// func p2pTCPDialer(ip, port, message string, pubKey string) {
+// 	var dialer net.Dialer
+// 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+// 	defer cancel()
+// 	connection, _ := dialer.DialContext(ctx, "tcp", ip+":"+port)
+// 	connection.Close()
+// }
 
-func p2pListener() {
-	listen, err := net.Listen("tcp", ":"+strconv.Itoa(karaiP2PPort))
-	handle("Something went wrong creating a listener: ", err)
-	defer listen.Close()
-	for {
-		listenerConnection, err := listen.Accept()
-		handle("Something went wrong accepting a connection: ", err)
-		go handleConnection(listenerConnection)
-	}
-}
+// func p2pListener() {
+// 	listen, err := net.Listen("tcp", ":"+strconv.Itoa(karaiP2PPort))
+// 	handle("Something went wrong creating a listener: ", err)
+// 	defer listen.Close()
+// 	for {
+// 		listenerConnection, err := listen.Accept()
+// 		handle("Something went wrong accepting a connection: ", err)
+// 		go handleConnection(listenerConnection)
+// 	}
+// }
 
 func banPeer(peerPubKey string) {
 	fmt.Println("Banning peer: " + peerPubKey[:8] + "...")
@@ -96,12 +93,12 @@ func whiteList() {
 	}
 }
 
-func initConnection(pubKey string) {
-	joinAddress := "zeus.karai.io"
-	joinAddressPort := "4201"
-	joinMessage := "JOIN"
-	p2pTCPDialer(joinAddress, joinAddressPort, joinMessage, pubKey)
-}
+// func initConnection(pubKey string) {
+// 	joinAddress := "zeus.karai.io"
+// 	joinAddressPort := "4201"
+// 	joinMessage := "HELLO " + pubKey
+// 	p2pTCPDialer(joinAddress, joinAddressPort, joinMessage, pubKey)
+// }
 
 func handleConnection(conn net.Conn) {
 	_, err := bufio.NewReader(conn).ReadBytes('\n')
