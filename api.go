@@ -160,9 +160,9 @@ func socketAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys, graph *Gr
 
 	}
 }
-func addTransactions(graph *Graph) {
+func addTransactions(number int, graph *Graph) {
 	sum := 0
-	for i := 1; i < 50; i++ {
+	for i := 1; i < number; i++ {
 		sum += i
 		msg := string(unixTimeStampNano())
 		graph.addTx(2, msg)

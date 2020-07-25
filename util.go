@@ -86,34 +86,23 @@ func writeTxToDisk(gtxType, gtxHash, gtxData, gtxPrev string) {
 	fmt.Printf(white+"\nWriting file...\nFileName: %s\nTransaction Body Object\n%s", txFileName, string(txJSONObject))
 	writeFile(txFileName, string(txJSONObject))
 }
+func createDirIfItDontExist(dir string) {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		err = os.MkdirAll(dir, 0755)
+		handle("", err)
+	}
+}
 
 // initLocations Check if p2p directory exists
 func checkDirs() {
-	// Graph directory holds graph objects
-	if _, err := os.Stat(graphDir); os.IsNotExist(err) {
-		os.Mkdir(graphDir, 0700)
-	}
-	// Base directory for P2P elements
-	if _, err := os.Stat(p2pConfigDir); os.IsNotExist(err) {
-		os.Mkdir(p2pConfigDir, 0700)
-	}
-	// Access control
-	if _, err := os.Stat(p2pWhitelistDir); os.IsNotExist(err) {
-		os.Mkdir(p2pWhitelistDir, 0700)
-	}
-	if _, err := os.Stat(p2pBlacklistDir); os.IsNotExist(err) {
-		os.Mkdir(p2pBlacklistDir, 0700)
-	}
-	// Certificates for remote and local
-	if _, err := os.Stat(certPath); os.IsNotExist(err) {
-		os.Mkdir(certPath, 0700)
-	}
-	if _, err := os.Stat(certPathRemote); os.IsNotExist(err) {
-		os.Mkdir(certPathRemote, 0700)
-	}
-	if _, err := os.Stat(certPathSelf); os.IsNotExist(err) {
-		os.Mkdir(certPathSelf, 0700)
-	}
+	createDirIfItDontExist(graphDir)
+	createDirIfItDontExist(configDir)
+	createDirIfItDontExist(p2pConfigDir)
+	createDirIfItDontExist(p2pWhitelistDir)
+	createDirIfItDontExist(p2pBlacklistDir)
+	createDirIfItDontExist(certPathDir)
+	createDirIfItDontExist(certPathSelfDir)
+	createDirIfItDontExist(certPathRemote)
 }
 
 // handle Ye Olde Error Handler takes a message and an error code
