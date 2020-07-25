@@ -2,14 +2,12 @@ package main
 
 // Hello Karai
 func main() {
-	parseFlags()
-	initPeerLists()
-	keys := initKeys()
-	locateGraphDir()
 	osCheck()
+	flags()
+	checkDirs()
+	cleanData()
+	keys := initKeys()
+	graph := initAPI(keys)
 	ascii()
-	initAPI(keys)
-	// go initConnection(keys.publicKey)
-	// go p2pListener()
-	inputHandler(keys)
+	inputHandler(keys, graph)
 }

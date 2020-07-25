@@ -5,9 +5,7 @@ import (
 	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
-	"io/ioutil"
 	"net/http"
-	"os"
 	"path/filepath"
 	"regexp"
 	"strconv"
@@ -20,17 +18,42 @@ import (
 
 // restAPI() This is the main API that is activated when isCoord == true
 func restAPI(keyCollection *ED25519Keys, graph *Graph) {
-	headersCORS := handlers.AllowedHeaders([]string{"Access-Control-Allow-Headers", "Access-Control-Allow-Methods", "Access-Control-Allow-Origin", "Cache-Control", "Content-Security-Policy", "Feature-Policy", "Referrer-Policy", "X-Requested-With"})
-	originsCORS := handlers.AllowedOrigins([]string{
+	corsAllowedHeaders := []string{
+		"Access-Control-Allow-Headers",
+		"Access-Control-Allow-Methods",
+		"Access-Control-Allow-Origin",
+		"Cache-Control",
+		"Content-Security-Policy",
+		"Feature-Policy",
+		"Referrer-Policy",
+		"X-Requested-With"}
+
+	corsOrigins := []string{
 		"*",
-		"127.0.0.1"})
-	methodsCORS := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
+		"127.0.0.1"}
+
+	corsMethods := []string{
+		"GET",
+		"HEAD",
+		"POST",
+		"PUT",
+		"OPTIONS"}
+
+	headersCORS := handlers.AllowedHeaders(corsAllowedHeaders)
+	originsCORS := handlers.AllowedOrigins(corsOrigins)
+	methodsCORS := handlers.AllowedMethods(corsMethods)
+
+	// Init API
 	r := mux.NewRouter()
 	api := r.PathPrefix("/api/v1").Subrouter()
+
+	// REST
 	api.HandleFunc("/", home).Methods(http.MethodGet)
 	api.HandleFunc("/peer", returnPeerID).Methods(http.MethodGet)
 	api.HandleFunc("/version", returnVersion).Methods(http.MethodGet)
 	api.HandleFunc("/transactions", returnTransactions).Methods(http.MethodGet)
+
+	// SOCKET
 	api.HandleFunc("/channel", func(w http.ResponseWriter, r *http.Request) {
 		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 		conn, _ := upgrader.Upgrade(w, r, nil)
@@ -38,12 +61,8 @@ func restAPI(keyCollection *ED25519Keys, graph *Graph) {
 		fmt.Printf(brightgreen+"\n[%s] [%s] Peer socket opened!\n"+white, timeStamp(), conn.RemoteAddr())
 		socketAuthAgent(conn, keyCollection, graph)
 	})
-	// if !wantsHTTPS {
-		http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api))
-	// }
-	// if wantsHTTPS {
-	// 	http.Serve(autocert.NewListener(sslDomain), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api))
-	// }
+
+	http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api))
 }
 
 func socketAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys, graph *Graph) {
@@ -141,20 +160,24 @@ func socketAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys, graph *Gr
 
 	}
 }
+func addTransactions(graph *Graph) {
+	sum := 0
+	for i := 1; i < 50; i++ {
+		sum += i
+		msg := string(unixTimeStampNano())
+		graph.addTx(2, msg)
+	}
+}
 
 func txParser(msg []byte, graph *Graph) bool {
-	if bytes.HasPrefix(msg, tsxnMsg) {
-		fmt.Printf("transaction found: %s", string(msg))
-		trimMsg := bytes.TrimRight(msg, "\n")
-		dataBytes := bytes.TrimLeft(trimMsg, "SEND ")
-		data := string(dataBytes)
-		if zValidJSON(data) {
-			graph.addTx(2, string(data))
-			return true
-		}
-		fmt.Printf("MSG Error: %s", string(msg))
+	trimMsg := bytes.TrimRight(msg, "\n")
+	data := string(trimMsg)
+	if validJSON(data) {
+		fmt.Printf("\nSubmitting transaction: %s", data)
+		graph.addTx(2, string(data))
+		return true
 	}
-	fmt.Printf("MSG Error: %s", string(msg))
+	fmt.Printf("\nJSON Error: %s", string(msg))
 	return false
 }
 
@@ -168,19 +191,19 @@ func trustedSessionParser(conn *websocket.Conn, keyCollection *ED25519Keys, grap
 			break
 		}
 		if txParser(msg, graph) {
-			fmt.Printf(brightgreen+"\n[%s] [%s] Tx Good: %s\n"+white, timeStamp(), conn.RemoteAddr(), err)
+			fmt.Printf(brightgreen+"\n[%s] [%s] Tx Good! \n"+white, timeStamp(), conn.RemoteAddr())
+
 		} else {
-			fmt.Printf("\n Oh no, something has gone very wrong..")
+			fmt.Printf("\n Oh no, something has gone very wrong..\n %s", msg)
 		}
 	}
 }
 
 // initAPI Check if we are running as a coordinator, if we are, start the API
-func initAPI(keyCollection *ED25519Keys) {
-	if !isCoordinator {
-		return
-	}
-	go restAPI(keyCollection, spawnGraph())
+func initAPI(keyCollection *ED25519Keys) *Graph {
+	graphObject := spawnGraph()
+	go restAPI(keyCollection, graphObject)
+	return graphObject
 }
 
 // home This is the home route, it can be used as a
@@ -205,7 +228,7 @@ func notFound(w http.ResponseWriter, r *http.Request) {
 func returnPeerID(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	var peerID = getPeerID()
+	var peerID = readFile(pubKeyFilePath)
 	w.Write([]byte("{\"p2p_peer_ID\": \"" + peerID + "\"}"))
 }
 
@@ -232,16 +255,4 @@ func returnTransactions(w http.ResponseWriter, r *http.Request) {
 	}
 	w.Write([]byte("{}"))
 	w.Write([]byte("\n]"))
-}
-
-func getPeerID() string {
-	peerFile, err := os.OpenFile(configPeerIDFile,
-		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	handle("Can't find peer.id file: ", err)
-	defer peerFile.Close()
-	fileToRead, err := ioutil.ReadFile(configPeerIDFile)
-	var peerID = string(fileToRead)
-	fmt.Println(peerID)
-	handle("Error: ", err)
-	return peerID
 }
