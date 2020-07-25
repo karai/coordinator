@@ -14,19 +14,20 @@ const (
 
 // File & folder constants
 const (
-	currentJSON       = "./config/milestone.json"
 	graphDir          = "./graph"
+	configDir         = "./config"
 	p2pConfigDir      = "./config/p2p"
 	p2pWhitelistDir   = p2pConfigDir + "/whitelist"
 	p2pBlacklistDir   = p2pConfigDir + "/blacklist"
+	certPathDir       = p2pConfigDir + "/cert"
+	certPathSelfDir   = certPathDir + "/self"
+	certPathRemote    = certPathDir + "/remote"
+	pubKeyFilePath    = certPathSelfDir + "/" + "pub.key"
+	privKeyFilePath   = certPathSelfDir + "/" + "priv.key"
+	signedKeyFilePath = certPathSelfDir + "/" + "signed.key"
+	selfCertFilePath  = certPathSelfDir + "/" + "self.cert"
+	currentJSON       = "./config/milestone.json"
 	p2pConfigFile     = "peer.id"
-	certPath          = p2pConfigDir + "/cert"
-	certPathSelf      = certPath + "/self"
-	certPathRemote    = certPath + "/remote"
-	pubKeyFilePath    = certPathSelf + "/" + "pub.key"
-	privKeyFilePath   = certPathSelf + "/" + "priv.key"
-	signedKeyFilePath = certPathSelf + "/" + "signed.key"
-	selfCertFilePath  = certPathSelf + "/" + "self.cert"
 )
 
 // Coordinator values

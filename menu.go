@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -42,8 +43,14 @@ func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 			menuOpenWallet()
 		} else if strings.Compare("write-graph", text) == 0 {
 			writeGraph(graph)
-		} else if strings.Compare("write-transactions", text) == 0 {
+		} else if strings.Compare("wt", text) == 0 {
 			writeTransactions(graph)
+		} else if strings.Compare("a", text) == 0 {
+			start := time.Now()
+			txint := 5000000
+			addTransactions(txint, graph)
+			elapsed := time.Since(start)
+			fmt.Printf("\nWriting %v objects to memory took %s seconds.", txint, elapsed)
 		} else if strings.Compare("transaction-history", text) == 0 {
 			menuGetContainerTransactions()
 		} else if strings.Compare("open-wallet-info", text) == 0 {
@@ -52,7 +59,7 @@ func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 			ktxAddressString := strings.TrimPrefix(text, "connect ")
 			if strings.Contains(ktxAddressString, ":") {
 				var justTheDomainPartNotThePort = strings.Split(ktxAddressString, ":")
-				var ktxCertFileName = certPath + "/remote/" + justTheDomainPartNotThePort[0] + ".cert"
+				var ktxCertFileName = certPathDir + "/remote/" + justTheDomainPartNotThePort[0] + ".cert"
 				if !fileExists(ktxCertFileName) {
 					joinChannel(ktxAddressString, keyCollection.publicKey, keyCollection.signedKey, "", keyCollection)
 				}
@@ -104,8 +111,6 @@ func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 			spawnChannel()
 		} else if strings.Compare("generate-pointer", text) == 0 {
 			generatePointer()
-		} else if strings.Compare("a", text) == 0 {
-			addTransactions(graph)
 		} else if strings.Compare("quit", text) == 0 {
 			menuExit()
 		} else if strings.Compare("close", text) == 0 {

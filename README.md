@@ -10,37 +10,58 @@
 
 **Launch Karai**
 
+As coordinator:
+
 ```
-./go-karai --coordinator --https --showip
+./go-karai -coordinator
 ```
+
+As client:
+
+```
+./go-karai
+```
+
+For quickly purging transactions and certs while developing:
+
+```
+./go-karai -clean
+```
+
+For optimal transaction speed as coordinator:
+
+```
+./go-karai -coordinator -write=false
+```
+
+When skipping the write process, you are taking some risk if Karai crashes before you write transactions to disk. You can write your transactions to disk with the `wt` command.
 
 **Launch Options**
 
 ```
---coordinator
+  -apiport int
+    	Port to run Karai Coordinator API on. (default 4200)
+  -clean
+    	Clear all peer certs and graph objects
+  -coordinator
+    	Run as coordinator.
+  -matrix
+    	Enable Matrix functions. Requires -matrixToken, -matrixURL, and -matrixRoomID
+  -matrixRoomID string
+    	Room ID for matrix publishd events
+  -matrixToken string
+    	Matrix homeserver token
+  -matrixURL string
+    	Matrix homeserver URL
+  -write
+    	Write each graph object to disk. (default true)
 ```
-
-This will launch the go-karai client in Coordinator mode. This is needed for some functions.
-
-```
---https
-```
-
-Use https with Coordinator API. This will use Autocert to automagically fetch the needed https certs for your channel.
-
-```
---showip
-```
-
-Launching as Coordinator prints a lot of diagnostic information while running. This will enable showing your IP in those log messages.
 
 > Type `menu` to view a list of functions. Functions that are darkened are disabled.
 
 ## Dependencies
 
 -   Golang 1.13+ [[Download]](https://golang.org)
--   TurtleCoin Daemon & Wallet-API [[Download]](http://latest.turtlecoin.lol)
--   IPFS [Download](https://github.com/ipfs/go-ipfs/releases/latest)
 
 ## Operating System
 
