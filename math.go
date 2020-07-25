@@ -9,18 +9,16 @@ import (
 	"os"
 	"strconv"
 	"strings"
-
-	"github.com/denisbrodbeck/machineid"
 )
 
-// generatePeerIO uses the machine ID to generate a unique string
-func generatePeerID() string {
-	machineID, err := machineid.ProtectedID("1f41d1f36f1f5251f32cfe0f1f924")
-	handle("There was a problem generating machine ID: ", err)
-	fmt.Println(machineID)
-	writeFile(configPeerIDFile, machineID)
-	return machineID
-}
+// // generatePeerIO uses the machine ID to generate a unique string
+// func generatePeerID() string {
+// 	machineID, err := machineid.ProtectedID("1f41d1f36f1f5251f32cfe0f1f924")
+// 	handle("There was a problem generating machine ID: ", err)
+// 	fmt.Println(machineID)
+// 	writeFile(configPeerIDFile, machineID)
+// 	return machineID
+// }
 
 // v4ToHex Convert an ip4 to hex
 func v4ToHex(addr string) string {

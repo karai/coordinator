@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"os"
 	"regexp"
+	"strconv"
 	"time"
 )
 
@@ -20,9 +21,10 @@ func ascii() {
 	if !isCoordinator {
 		fmt.Printf(brightcyan)
 	}
+	fmt.Printf("\n\n")
 	fmt.Printf("|   _   _  _  .\n")
 	fmt.Printf("|( (_| |  (_| |\n")
-	fmt.Println(red + semverInfo())
+	fmt.Println(red + semverInfo() + white)
 }
 
 // printLicense Print the license for the user
@@ -48,23 +50,6 @@ func fileExists(filename string) bool {
 	return !referencedFile.IsDir()
 }
 
-// directoryMissing Check if a directory has been abducted
-func directoryMissing(dirName string) bool {
-	src, err := os.Stat(dirName)
-	if os.IsNotExist(err) {
-		errDir := os.MkdirAll(dirName, 0755)
-		if errDir != nil {
-			handle("Something went wrong creating the p2p dir: ", err)
-		}
-		return true
-	}
-	if src.Mode().IsRegular() {
-		fmt.Println(dirName, " already exists as a file.")
-		return false
-	}
-	return false
-}
-
 // fileContainsString This is a utility to see if a string in a file exists.
 func fileContainsString(str, filepath string) bool {
 	accused, _ := ioutil.ReadFile(filepath)
@@ -82,41 +67,52 @@ func timeStamp() string {
 	return current.Format("2006-01-02 15:04:05")
 }
 
+func unixTimeStampNano() string {
+	timestamp := strconv.FormatInt(time.Now().UTC().UnixNano(), 10)
+	return timestamp
+}
+
 // Split helps me split up the args after a command
 func Split(r rune) bool {
 	return r == ':' || r == '.'
 }
 
-// initPeerLists Check if p2p directory exists, if it does then check for a
-// peer file, if it is not there we generate one, then we open it and see if
-// it conforms to what we expect, if it does then announce the peer identity.
-func initPeerLists() {
+func writeTxToDisk(gtxType, gtxHash, gtxData, gtxPrev string) {
+	timeNano := unixTimeStampNano()
+	txFileName := timeNano + ".json"
+	createFile(txFileName)
+	txJSONItems := []string{gtxType, gtxHash, gtxData, gtxPrev}
+	txJSONObject, _ := json.Marshal(txJSONItems)
+	fmt.Printf(white+"\nWriting file...\nFileName: %s\nTransaction Body Object\n%s", txFileName, string(txJSONObject))
+	writeFile(txFileName, string(txJSONObject))
+}
+
+// initLocations Check if p2p directory exists
+func checkDirs() {
+	// Graph directory holds graph objects
+	if _, err := os.Stat(graphDir); os.IsNotExist(err) {
+		os.Mkdir(graphDir, 0700)
+	}
+	// Base directory for P2P elements
 	if _, err := os.Stat(p2pConfigDir); os.IsNotExist(err) {
 		os.Mkdir(p2pConfigDir, 0700)
 	}
+	// Access control
 	if _, err := os.Stat(p2pWhitelistDir); os.IsNotExist(err) {
 		os.Mkdir(p2pWhitelistDir, 0700)
 	}
 	if _, err := os.Stat(p2pBlacklistDir); os.IsNotExist(err) {
 		os.Mkdir(p2pBlacklistDir, 0700)
 	}
-	if !directoryMissing(p2pConfigDir) {
-		if fileExists(configPeerIDFile) {
-			peerIdentity := readFile(configPeerIDFile)
-			if len(peerIdentity) > 16 {
-				fmt.Printf(white + "Machine ID:\t" + brightblack)
-				fmt.Printf("%s", peerIdentity)
-			} else if len(peerIdentity) < 16 {
-				deleteFile(configPeerIDFile)
-				generatePeerID()
-			}
-		} else if !fileExists(configPeerIDFile) {
-			fmt.Printf("\nFile " + configPeerIDFile + " does not exist.")
-			createFile(configPeerIDFile)
-			generatePeerID()
-		}
-	} else if directoryMissing(p2pConfigDir) {
-		fmt.Println("Directory " + p2pConfigDir + " does not exist.")
+	// Certificates for remote and local
+	if _, err := os.Stat(certPath); os.IsNotExist(err) {
+		os.Mkdir(certPath, 0700)
+	}
+	if _, err := os.Stat(certPathRemote); os.IsNotExist(err) {
+		os.Mkdir(certPathRemote, 0700)
+	}
+	if _, err := os.Stat(certPathSelf); os.IsNotExist(err) {
+		os.Mkdir(certPathSelf, 0700)
 	}
 }
 
@@ -197,15 +193,8 @@ func readFileBytes(filename string) []byte {
 
 // deleteFile Generic file handler
 func deleteFile(filename string) {
-	os.Remove(filename)
-}
-
-// locateGraphDir Find graph storage, create if missing.
-func locateGraphDir() {
-	if _, err := os.Stat(graphDir); os.IsNotExist(err) {
-		err = os.MkdirAll("./graph", 0755)
-		handle("Error locating graph directory: ", err)
-	}
+	err := os.Remove(filename)
+	handle("Problem deleting file: ", err)
 }
 
 func validJSON(stringToValidate string) bool {
@@ -222,4 +211,46 @@ func zValidJSON(stringToValidate string) bool {
 	}
 	fmt.Printf("\nJSON is NOT valid: %s", stringToValidate)
 	return false
+}
+
+func cleanData() {
+	if wantsClean {
+		// cleanse the whitelist
+		directory := p2pWhitelistDir + "/"
+		dirRead, _ := os.Open(directory)
+		dirFiles, _ := dirRead.Readdir(0)
+		for index := range dirFiles {
+			fileHere := dirFiles[index]
+			nameHere := fileHere.Name()
+			fullPath := directory + nameHere
+			deleteFile(fullPath)
+		}
+
+		// cleanse the blacklist
+		blackList, _ := ioutil.ReadDir(p2pBlacklistDir + "/")
+		for _, f := range blackList {
+			fileToDelete := p2pBlacklistDir + "/" + f.Name()
+			fmt.Printf("\nDeleting file: %s", fileToDelete)
+			deleteFile(f.Name())
+		}
+		fmt.Printf(brightyellow+"\nPeers clear: %s"+white, brightgreen+"✔️")
+
+		// cleanse the remote certs
+		remoteCert, _ := ioutil.ReadDir(certPathRemote + "/")
+		for _, f := range remoteCert {
+			fileToDelete := certPathRemote + "/" + f.Name()
+			fmt.Printf("\nDeleting file: %s", fileToDelete)
+			deleteFile(fileToDelete)
+		}
+		fmt.Printf(brightyellow+"\nCerts clear: %s"+white, brightgreen+"✔️")
+
+		// cleanse the graph
+		graphObjects, _ := ioutil.ReadDir(graphDir + "/")
+		for _, f := range graphObjects {
+			fileToDelete := graphDir + "/" + f.Name()
+			fmt.Printf("\nDeleting file: %s", fileToDelete)
+			deleteFile(fileToDelete)
+		}
+		fmt.Printf(brightyellow+"\nGraph clear: %s"+white, brightgreen+"✔️")
+	}
 }
