@@ -14,17 +14,21 @@ import (
 // ascii Splash logo. We used to have a package for this
 // but it was only for the logo so why not just static-print it?
 func ascii() {
-	fmt.Printf("\n")
+	fmt.Printf("\n\n")
+	fmt.Printf(green + " )¯¯)/¯¯/  /¯/\\¯\\  l¯¯l)¯¯)  /¯/\\¯\\   )¯¯)\n")
+	fmt.Printf(brightgreen + "(__(\\__\\ /__/¯¯\\__\\l__l\\__\\/__/¯¯\\__\\(__( \n")
+	fmt.Printf(brightred + "v" + semverInfo() + white)
 	if isCoordinator {
-		fmt.Printf(brightred)
+		fmt.Printf(brightred + " coordinator")
 	}
 	if !isCoordinator {
-		fmt.Printf(brightcyan)
+		fmt.Printf(brightgreen + " client")
 	}
-	fmt.Printf("\n\n")
-	fmt.Printf("|   _   _  _  .\n")
-	fmt.Printf("|( (_| |  (_| |\n")
-	fmt.Println(red + semverInfo() + white)
+
+}
+
+func delay(seconds time.Duration) {
+	time.Sleep(seconds * time.Second)
 }
 
 // printLicense Print the license for the user
@@ -89,7 +93,7 @@ func writeTxToDisk(gtxType, gtxHash, gtxData, gtxPrev string) {
 func createDirIfItDontExist(dir string) {
 	if _, err := os.Stat(dir); os.IsNotExist(err) {
 		err = os.MkdirAll(dir, 0755)
-		handle("", err)
+		handle("Could not create directory: ", err)
 	}
 }
 

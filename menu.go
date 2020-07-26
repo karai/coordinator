@@ -22,15 +22,24 @@ type v1Tx struct {
 func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 	reader := bufio.NewReader(os.Stdin)
 	var conn *websocket.Conn
+
+	fmt.Printf("\n\n%v%v%v\n", white+"Type '", brightgreen+"menu", white+"' to view a list of commands")
 	for {
-		fmt.Printf("\n%v%v%v\n", white+"Type '", brightgreen+"menu", white+"' to view a list of commands")
-		fmt.Print(white + "-> ")
+		if isCoordinator {
+			fmt.Print(brightred + "#> ")
+		}
+		if !isCoordinator {
+			fmt.Print(brightgreen + "$> ")
+		}
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSpace(text)
 		if strings.Compare("help", text) == 0 {
 			menu()
 		} else if strings.Compare("?", text) == 0 {
 			menu()
+		} else if strings.Compare("peer", text) == 0 {
+			fmt.Printf(brightcyan + "Peer ID: ")
+			fmt.Printf(cyan+"%s\n", keyCollection.publicKey)
 		} else if strings.Compare("menu", text) == 0 {
 			menu()
 		} else if strings.Compare("version", text) == 0 {
@@ -117,8 +126,6 @@ func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 			menuExit()
 		} else if strings.Compare("\n", text) == 0 {
 			fmt.Println("")
-		} else {
-			fmt.Println("What?")
 		}
 	}
 }

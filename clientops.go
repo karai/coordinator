@@ -20,7 +20,7 @@ func joinChannel(ktx, pubKey, signedKey, ktxCertFileName string, keyCollection *
 		fmt.Println(brightred + "This is for nodes running in client mode only.")
 		return nil
 	}
-	fmt.Printf(brightcyan+"\nConnection request with ktx %s", ktx)
+	fmt.Printf(brightcyan+"\nConnecting:"+white+" %s", ktx)
 
 	// request a websocket connection
 	var conn = requestSocket(ktx, "1")
@@ -62,8 +62,8 @@ func socketMsgParser(ktx, pubKey, signedKey string, conn *websocket.Conn, keyCol
 	_, joinResponse, err := conn.ReadMessage()
 	handle("There was a problem reading the socket: ", err)
 	if strings.HasPrefix(string(joinResponse), "WCBK") {
-		fmt.Printf("\nConnected to %s", ktx)
-		fmt.Printf("\nType \"send %s <JSON>\" to send a transaction.", ktx)
+		fmt.Printf(brightgreen + " ✔️\nConnected!\n" + white)
+		fmt.Printf("\nType `"+brightpurple+"send %s <JSON>"+white+"` to send a transaction.\n\n", ktx)
 		isTrusted = true
 	}
 	if strings.Contains(string(joinResponse), string(capkMsg)) {

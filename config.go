@@ -14,7 +14,6 @@ const (
 
 // File & folder constants
 const (
-	graphDir          = "./graph"
 	configDir         = "./config"
 	p2pConfigDir      = "./config/p2p"
 	p2pWhitelistDir   = p2pConfigDir + "/whitelist"
@@ -47,7 +46,8 @@ var (
 )
 
 var (
-	showIP       bool = false
+	graphDir     string = ""
+	showIP       bool   = false
 	karaiAPIPort int
 	p2pPeerID    string
 	upgrader     = websocket.Upgrader{
