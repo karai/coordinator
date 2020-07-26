@@ -5,7 +5,7 @@ func semverInfo() string {
 	var majorSemver, minorSemver, patchSemver, wholeString string
 	majorSemver = "0"
 	minorSemver = "19"
-	patchSemver = "9"
+	patchSemver = "10"
 	wholeString = majorSemver + "." + minorSemver + "." + patchSemver
 	return wholeString
 }
