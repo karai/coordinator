@@ -28,8 +28,8 @@ type GraphTx struct {
 func printTx(file string) string {
 	dat, err := ioutil.ReadFile(file)
 	handle("derp, something went wrong", err)
-	datString := string(dat) + ",\n"
-	return datString
+	// datString := string(dat) + ",\n"
+	return string(dat)
 }
 
 // hashTx This will compute the tx hash using sha512
@@ -60,7 +60,7 @@ func (graph *Graph) addTx(txType int, data string) {
 			publishToMatrix(data, matrixURL, matrixRoomID, matrixToken)
 		}
 	} else {
-		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
+		fmt.Printf("\nIt looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
 	}
 }
 
@@ -103,9 +103,10 @@ func spawnGraph() *Graph {
 // spawnChannel Create a Tx Channel, Root Tx and Milestone, listen for Tx
 func spawnChannel() {
 	if !isCoordinator {
-		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
+		fmt.Printf("\nIt looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
 	} else {
 		spawnGraph()
+		fmt.Printf(brightcyan + "Creating channel...\n" + white)
 	}
 }
 
@@ -115,29 +116,43 @@ func writeGraph(graph *Graph) {
 	createFile(unixFileName)
 	writeFile(unixFileName, graphJSON)
 }
+
 func writeTransactions(graph *Graph) {
 	start := time.Now()
 	graphJSON := graph.Transactions
-	chunkSize := 1000000
-	customQueue := &workQueue{
-		stack: make([]string, 0),
-	}
-	for i := 0; i < len(graphJSON); i += chunkSize {
-		customQueue.push(string(i))
-	}
-	fmt.Printf(brightcyan+"\nQueue Size: %d"+white, customQueue.size())
-	for batch := 0; batch < len(graphJSON); batch += chunkSize {
-		fileName := graphDir + "/" + strconv.Itoa((batch/chunkSize)+1) + ".json"
-		createFile(fileName)
-		data := make([]*GraphTx, chunkSize)
-		for item := batch; item < batch+chunkSize; item++ {
-			data[item-batch] = graphJSON[item]
+	if len(graph.Transactions) < chunkSize {
+		fmt.Printf(brightred+"\nYou requested a chunk size of %v but only have %v transactions to write..\n"+white, chunkSize, len(graph.Transactions))
+		if len(graph.Transactions) > 1 {
+			chunkSize = len(graph.Transactions) - 1
+		} else {
+			fmt.Printf(brightred + "\nWe cant batch any transactions to disk because there arent any. Something is wrong.\n" + white)
 		}
-		dataJSON, _ := json.Marshal(data)
-		writeFile(fileName, string(dataJSON))
-		fmt.Printf(brightgreen+"\nSaved: %s"+white, fileName)
-		customQueue.pop()
+	} else if len(graph.Transactions) > chunkSize {
+		customQueue := &workQueue{
+			stack: make([]string, 0),
+		}
+		for i := 0; i < len(graphJSON); i += chunkSize {
+			customQueue.push(string(i))
+		}
+		fmt.Printf(brightcyan+"\nGraph Size: %d"+white, len(graph.Transactions))
+		fmt.Printf(brightcyan+"\nQueue Size: %d"+white, customQueue.size())
+		fmt.Printf(brightcyan+"\nBatch Size: %d"+white, len(graph.Transactions))
+		for batch := 0; batch < len(graphJSON); batch += chunkSize {
+			fmt.Printf("\nfilename")
+			fileName := batchDir + "/" + strconv.Itoa((batch/chunkSize)+1) + ".json"
+			fmt.Printf("\ncreate")
+			createFile(fileName)
+			data := make([]*GraphTx, chunkSize)
+			for item := batch; item < batch+chunkSize; item++ {
+				data[item-batch] = graphJSON[item]
+			}
+			dataJSON, _ := json.Marshal(data)
+			fmt.Printf("\nwrite")
+			writeFile(fileName, string(dataJSON))
+			fmt.Printf(brightgreen+"\nSaved: %s"+white, fileName)
+			customQueue.pop()
+		}
+		elapsed := time.Since(start)
+		fmt.Printf("\nTook %s seconds.\n", elapsed)
 	}
-	elapsed := time.Since(start)
-	fmt.Printf("\nTook %s seconds.", elapsed)
 }

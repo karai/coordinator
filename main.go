@@ -9,7 +9,7 @@ func main() {
 	keys := initKeys()
 	graph := initAPI(keys)
 	ascii()
-	// consume(graph)
+	go consume(graph)
 	inputHandler(keys, graph)
 
 }

@@ -52,14 +52,20 @@ func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 			menuOpenWallet()
 		} else if strings.Compare("write-graph", text) == 0 {
 			writeGraph(graph)
-		} else if strings.Compare("wt", text) == 0 {
+		} else if strings.Compare("batch", text) == 0 {
 			writeTransactions(graph)
+		} else if strings.Compare("upgrade", text) == 0 {
+			returnMessage(conn, keyCollection.publicKey)
 		} else if strings.Compare("a", text) == 0 {
-			start := time.Now()
-			txint := 5000000
-			addTransactions(txint, graph)
-			elapsed := time.Since(start)
-			fmt.Printf("\nWriting %v objects to memory took %s seconds.", txint, elapsed)
+			if isCoordinator {
+				start := time.Now()
+				txint := 5000
+				addTransactions(txint, graph)
+				elapsed := time.Since(start)
+				fmt.Printf("\nWriting %v objects to memory took %s seconds.\n", txint, elapsed)
+			} else {
+				fmt.Printf("It looks like you're not a channel coordinator. \nRun Karai with '-coordinator' option to run this command.\n")
+			}
 		} else if strings.Compare("transaction-history", text) == 0 {
 			menuGetContainerTransactions()
 		} else if strings.Compare("open-wallet-info", text) == 0 {
@@ -89,6 +95,7 @@ func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 					if validJSON(result[1]) {
 						conn = requestSocket(result[0], "1")
 						stateYourBusiness(conn, keyCollection.publicKey)
+						// readFileBytes()
 						sendV1Transaction(result[1], conn)
 					} else {
 						fmt.Printf("That JSON doesnt look too good. ")
@@ -107,16 +114,16 @@ func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 			unBanPeer(unBannedPeer)
 		} else if strings.HasPrefix(text, "blacklist") {
 			blackList()
-		} else if strings.HasPrefix(text, "clear blacklist") {
+		} else if strings.Compare("clear blacklist", text) == 0 {
 			clearBlackList()
-		} else if strings.HasPrefix(text, "clear peerlist") {
+		} else if strings.Compare("clear peerlist", text) == 0 {
 			clearPeerList()
-		} else if strings.HasPrefix(text, "peerlist") {
+		} else if strings.Compare("peerlist", text) == 0 {
 			whiteList()
 		} else if strings.Compare("exit", text) == 0 {
 			menuExit()
 		} else if strings.Compare("create-channel", text) == 0 {
-			fmt.Printf(cyan + "\nReticulating splines..\n" + white)
+			fmt.Printf(brightcyan + "Creating channel...\n" + white)
 			spawnChannel()
 		} else if strings.Compare("generate-pointer", text) == 0 {
 			generatePointer()
@@ -124,8 +131,10 @@ func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 			menuExit()
 		} else if strings.Compare("close", text) == 0 {
 			menuExit()
-		} else if strings.Compare("\n", text) == 0 {
-			fmt.Println("")
+			// } else if strings.Compare("\n", text) == 0 {
+			// fmt.Printf(brightred + "Unknown Input\n" + nc)
+		} else {
+			fmt.Printf(brightred + "Unknown Input\n" + nc)
 		}
 	}
 }
@@ -184,7 +193,7 @@ func menu() {
 	}
 
 	for _, opt := range menuOptions {
-		fmt.Println(brightgreen + "\n" + opt)
+		fmt.Printf(brightgreen + "\n" + opt)
 		for menuOptionColor, options := range menuData[opt] {
 			switch menuOptionColor {
 			case 0:
@@ -193,10 +202,10 @@ func menu() {
 				fmt.Printf(brightblack)
 			}
 			for _, message := range options {
-				fmt.Println(message)
+				fmt.Printf("\n" + message)
 			}
 		}
 	}
 
-	fmt.Println("")
+	fmt.Printf("\n")
 }

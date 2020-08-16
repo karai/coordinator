@@ -17,7 +17,7 @@ type clientHeader struct {
 
 func joinChannel(ktx, pubKey, signedKey, ktxCertFileName string, keyCollection *ED25519Keys) *websocket.Conn {
 	if isCoordinator {
-		fmt.Println(brightred + "This is for nodes running in client mode only.")
+		fmt.Printf(brightred + "\nThis is for nodes running in client mode only.")
 		return nil
 	}
 	fmt.Printf(brightcyan+"\nConnecting:"+white+" %s", ktx)
@@ -51,6 +51,15 @@ func stateYourBusiness(conn *websocket.Conn, pubKey string) *websocket.Conn {
 	return conn
 }
 
+func returnMessage(conn *websocket.Conn, pubKey string) *websocket.Conn {
+	if !isFNG {
+		certString := readFile(selfCertFilePath)
+		rtrnReq := "RTRN " + pubKey[:64] + " " + certString
+		_ = conn.WriteMessage(1, []byte(rtrnReq))
+	}
+	return conn
+}
+
 func requestSocket(ktx, protocolVersion string) *websocket.Conn {
 	urlConnection := url.URL{Scheme: "ws", Host: ktx, Path: "/api/v" + protocolVersion + "/channel"}
 	conn, _, err := websocket.DefaultDialer.Dial(urlConnection.String(), nil)
@@ -62,9 +71,10 @@ func socketMsgParser(ktx, pubKey, signedKey string, conn *websocket.Conn, keyCol
 	_, joinResponse, err := conn.ReadMessage()
 	handle("There was a problem reading the socket: ", err)
 	if strings.HasPrefix(string(joinResponse), "WCBK") {
+		isTrusted = true
+		isFNG = false
 		fmt.Printf(brightgreen + " ✔️\nConnected!\n" + white)
 		fmt.Printf("\nType `"+brightpurple+"send %s <JSON>"+white+"` to send a transaction.\n\n", ktx)
-		isTrusted = true
 	}
 	if strings.Contains(string(joinResponse), string(capkMsg)) {
 		convertjoinResponseString := string(joinResponse)
@@ -74,6 +84,7 @@ func socketMsgParser(ktx, pubKey, signedKey string, conn *websocket.Conn, keyCol
 		composedNcasMsgtring := string(ncasMsg) + " " + ncasMsgtring
 		_ = conn.WriteMessage(1, []byte(composedNcasMsgtring))
 		_, certResponse, err := conn.ReadMessage()
+		isFNG = false
 		convertStringcertResponse := string(certResponse) // keys := generateKeys()
 		trimNewLinecertResponse := strings.TrimRight(convertStringcertResponse, "\n")
 		trimCmdPrefixcertResponse := strings.TrimPrefix(trimNewLinecertResponse, "CERT ")
@@ -85,7 +96,6 @@ func socketMsgParser(ktx, pubKey, signedKey string, conn *websocket.Conn, keyCol
 		fmt.Printf(white+"%s", ktxCertFileName)
 		fmt.Printf(brightgreen + "\nCert Body: ")
 		fmt.Printf(white+"%s", trimCmdPrefixcertResponse[:192])
-		isFNG = false
 	}
 }
 
