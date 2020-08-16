@@ -29,7 +29,7 @@ import (
 // }
 
 func banPeer(peerPubKey string) {
-	fmt.Println("Banning peer: " + peerPubKey[:8] + "...")
+	fmt.Printf("\nBanning peer: %s" + peerPubKey[:8] + "...")
 	whitelist := p2pWhitelistDir + "/" + peerPubKey + ".cert"
 	blacklist := p2pBlacklistDir + "/" + peerPubKey + ".cert"
 	err := os.Rename(whitelist, blacklist)
@@ -37,7 +37,7 @@ func banPeer(peerPubKey string) {
 }
 
 func unBanPeer(peerPubKey string) {
-	fmt.Println("Unbanning peer: " + peerPubKey[:8] + "...")
+	fmt.Printf("\nUnbanning peer: %s" + peerPubKey[:8] + "...")
 	whitelist := p2pWhitelistDir + "/" + peerPubKey + ".cert"
 	blacklist := p2pBlacklistDir + "/" + peerPubKey + ".cert"
 	err := os.Rename(blacklist, whitelist)
@@ -45,18 +45,18 @@ func unBanPeer(peerPubKey string) {
 }
 
 func blackList() {
-	fmt.Println(brightcyan + "Displaying banned peers...")
+	fmt.Printf(brightcyan + "\nDisplaying banned peers...")
 	files, err := ioutil.ReadDir(p2pBlacklistDir)
 	handle(brightred+"There was a problem retrieving the blacklist: ", err)
 	for _, cert := range files {
 		certName := cert.Name()
 		bannedPeerPubKey := strings.TrimRight(certName, ".cert")
-		fmt.Println(brightred + bannedPeerPubKey + white)
+		fmt.Printf(brightred + "\n" + bannedPeerPubKey + white)
 	}
 }
 
 func clearBlackList() {
-	fmt.Println(brightcyan + "Clearing banned peers..." + white)
+	fmt.Printf(brightcyan + "Clearing banned peers..." + white)
 	files, err := ioutil.ReadDir(p2pBlacklistDir)
 	handle(brightred+"There was a problem clearing the blacklist: ", err)
 	for _, cert := range files {
@@ -67,38 +67,31 @@ func clearBlackList() {
 }
 
 func clearPeerList() {
-	fmt.Println(brightcyan + "Purging peer certificates...")
+	fmt.Printf(brightcyan + "Purging peer certificates...")
 	directory := p2pWhitelistDir + "/"
 	dirRead, _ := os.Open(directory)
 	dirFiles, _ := dirRead.Readdir(0)
 	for index := range dirFiles {
 		fileHere := dirFiles[index]
 		nameHere := fileHere.Name()
-		fmt.Println(brightred+"Purging: "+white, nameHere)
+		fmt.Printf(brightred+"Purging: %s"+white, nameHere)
 		fullPath := directory + nameHere
 		os.Remove(fullPath)
 	}
-	fmt.Println(brightyellow + "Peer list empty!" + white)
+	fmt.Printf(brightyellow + "\n" + "Peer list empty!" + white)
 
 }
 
 func whiteList() {
-	fmt.Println(brightcyan + "Displaying peers...")
+	fmt.Printf(brightcyan + "Displaying peers...\n")
 	files, err := ioutil.ReadDir(p2pWhitelistDir)
 	handle(brightred+"There was a problem retrieving the peerlist: "+white, err)
 	for _, cert := range files {
 		certName := cert.Name()
 		peerPubKey := strings.TrimRight(certName, ".cert")
-		fmt.Println(peerPubKey)
+		fmt.Printf("\n" + peerPubKey)
 	}
 }
-
-// func initConnection(pubKey string) {
-// 	joinAddress := "zeus.karai.io"
-// 	joinAddressPort := "4201"
-// 	joinMessage := "HELLO " + pubKey
-// 	p2pTCPDialer(joinAddress, joinAddressPort, joinMessage, pubKey)
-// }
 
 func handleConnection(conn net.Conn) {
 	_, err := bufio.NewReader(conn).ReadBytes('\n')

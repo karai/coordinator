@@ -9,7 +9,7 @@ package main
 // 		createCIDforTx(match)
 // 	}
 // 	end := time.Since(start)
-// 	fmt.Println("Finished in: ", end)
+// 	fmt.Printf("\nFinished in: ", end)
 // }
 
 // // createCIDforTx This will take a file as a parameter and
@@ -32,7 +32,7 @@ package main
 // with ipfs/libp2p
 // func appendGraphCID(cid string) {
 // 	if !isCoordinator {
-// 		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
+// 		fmt.Printf("\nIt looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
 // 	} else {
 // 		hashfile, err := os.OpenFile(hashDat,
 // 			os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)

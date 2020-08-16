@@ -12,9 +12,11 @@ var readyBtc bool
 
 func consume(graph *Graph) {
 	if isCoordinator {
-		go getDataCovid19(5000, graph)
-		go getDataBitcoin(120, graph)
-		go getDataOgre(120, graph)
+		if consumeData {
+			go getDataCovid19(5000, graph)
+			go getDataBitcoin(120, graph)
+			go getDataOgre(120, graph)
+		}
 	}
 }
 
@@ -70,6 +72,8 @@ func getDataOgre(seconds time.Duration, graph *Graph) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	handle("Error: ", err)
+	// i think i should json parse here to remove the slashes
+	// but there is no json.Parse in go i dont think
 	graph.addTx(2, string(body))
 	delay(seconds)
 	go getDataOgre(seconds, graph)

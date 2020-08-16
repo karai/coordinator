@@ -15,8 +15,8 @@ import (
 // but it was only for the logo so why not just static-print it?
 func ascii() {
 	fmt.Printf("\n\n")
-	fmt.Printf(green + " )¯¯)/¯¯/  /¯/\\¯\\  l¯¯l)¯¯)  /¯/\\¯\\   )¯¯)\n")
-	fmt.Printf(brightgreen + "(__(\\__\\ /__/¯¯\\__\\l__l\\__\\/__/¯¯\\__\\(__( \n")
+	fmt.Printf(green + "|  |/  / /  /\\  \\ |  |)  ) /  /\\  \\ |  |\n")
+	fmt.Printf(brightgreen + "|__|\\__\\/__/¯¯\\__\\|__|\\__\\/__/¯¯\\__\\|__| \n")
 	fmt.Printf(brightred + "v" + semverInfo() + white)
 	if isCoordinator {
 		fmt.Printf(brightred + " coordinator")
@@ -34,15 +34,15 @@ func delay(seconds time.Duration) {
 // printLicense Print the license for the user
 func printLicense() {
 	fmt.Printf(brightgreen + "\n" + appName + " v" + semverInfo() + white + " by " + appDev)
-	fmt.Println(brightgreen + "\n" + appRepository + "\n" + appURL + "\n")
-	fmt.Println(brightwhite + "\nMIT License\nCopyright (c) 2020-2021 RockSteady, TurtleCoin Developers")
-	fmt.Println(brightblack + "\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in allcopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.")
-	fmt.Println()
+	fmt.Printf(brightgreen + "\n" + appRepository + "\n" + appURL + "\n")
+	fmt.Printf(brightwhite + "\nMIT License\nCopyright (c) 2020-2021 RockSteady, TurtleCoin Developers")
+	fmt.Printf(brightblack + "\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the 'Software'), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in allcopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.")
+	fmt.Printf("\n")
 }
 
 // menuVersion Print the version string for the user
 func menuVersion() {
-	fmt.Println(appName + " - v" + semverInfo())
+	fmt.Printf("%s - v%s\n", appName, semverInfo())
 }
 
 // fileExists Does this file exist?
@@ -100,6 +100,7 @@ func createDirIfItDontExist(dir string) {
 // initLocations Check if p2p directory exists
 func checkDirs() {
 	createDirIfItDontExist(graphDir)
+	createDirIfItDontExist(batchDir)
 	createDirIfItDontExist(configDir)
 	createDirIfItDontExist(p2pConfigDir)
 	createDirIfItDontExist(p2pWhitelistDir)
@@ -180,7 +181,7 @@ func readFileBytes(filename string) []byte {
 			break
 		}
 	}
-	// fmt.Println(string(text))
+	// fmt.Printf(string(text))
 	return text
 }
 
@@ -191,19 +192,21 @@ func deleteFile(filename string) {
 }
 
 func validJSON(stringToValidate string) bool {
-	var jsonString json.RawMessage
-	return json.Unmarshal([]byte(stringToValidate), &jsonString) == nil
+	// var jsonString json.RawMessage
+	// return json.Unmarshal([]byte(stringToValidate), &jsonString) == nil
+	return json.Valid([]byte(stringToValidate))
 }
 
 func zValidJSON(stringToValidate string) bool {
-	var jsonData map[string]string
-	err := json.Unmarshal([]byte(stringToValidate), &jsonData)
-	if err == nil {
-		fmt.Printf("\nJSON is valid")
-		return true
-	}
-	fmt.Printf("\nJSON is NOT valid: %s", stringToValidate)
-	return false
+	// var jsonData map[string]string
+	// err := json.Unmarshal([]byte(stringToValidate), &jsonData)
+	// if err == nil {
+	// 	fmt.Printf("\nJSON is valid")
+	// 	return true
+	// }
+	// fmt.Printf("\nJSON is NOT valid: %s", stringToValidate)
+	// return false
+	return json.Valid([]byte(stringToValidate))
 }
 
 func cleanData() {
@@ -236,6 +239,15 @@ func cleanData() {
 			deleteFile(fileToDelete)
 		}
 		fmt.Printf(brightyellow+"\nCerts clear: %s"+white, brightgreen+"✔️")
+
+		// cleanse the batches
+		batchObjects, _ := ioutil.ReadDir(batchDir + "/")
+		for _, f := range batchObjects {
+			fileToDelete := batchDir + "/" + f.Name()
+			fmt.Printf("\nDeleting file: %s", fileToDelete)
+			deleteFile(fileToDelete)
+		}
+		fmt.Printf(brightyellow+"\nBatches clear: %s"+white, brightgreen+"✔️")
 
 		// cleanse the graph
 		graphObjects, _ := ioutil.ReadDir(graphDir + "/")

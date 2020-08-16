@@ -41,16 +41,16 @@ var (
 	nsigMsg             []byte = []byte("NSIG")
 	sendMsg             []byte = []byte("send")
 	rtrnMsg             []byte = []byte("RTRN")
+	consumeData         bool   = false
 	isCoordinator       bool   = false
 	wantsClean          bool   = false
-)
-
-var (
-	graphDir     string = ""
-	showIP       bool   = false
-	karaiAPIPort int
-	p2pPeerID    string
-	upgrader     = websocket.Upgrader{
+	graphDir            string = ""
+	batchDir            string = ""
+	showIP              bool   = false
+	chunkSize           int
+	karaiAPIPort        int
+	p2pPeerID           string
+	upgrader            = websocket.Upgrader{
 		EnableCompression: true,
 		ReadBufferSize:    1024,
 		WriteBufferSize:   1024,

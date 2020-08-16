@@ -15,7 +15,7 @@ import (
 // func generatePeerID() string {
 // 	machineID, err := machineid.ProtectedID("1f41d1f36f1f5251f32cfe0f1f924")
 // 	handle("There was a problem generating machine ID: ", err)
-// 	fmt.Println(machineID)
+// 	fmt.Printf(machineID)
 // 	writeFile(configPeerIDFile, machineID)
 // 	return machineID
 // }
@@ -41,19 +41,19 @@ func portToHex(port string) string {
 // generatePointer create the TRTL <=> Karai pointer
 func generatePointer() {
 	if !isCoordinator {
-		fmt.Println("It looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
+		fmt.Printf("\nIt looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
 	} else {
 		readerKtxIP := bufio.NewReader(os.Stdin)
-		fmt.Print("Enter Karai Coordinator IP: ")
+		fmt.Printf("\nEnter Karai Coordinator IP: ")
 		ktxIP, _ := readerKtxIP.ReadString('\n')
 		readerKtxPort := bufio.NewReader(os.Stdin)
-		fmt.Print("Enter Karai Coordinator Port: ")
+		fmt.Print("\nEnter Karai Coordinator Port: ")
 		ktxPort, _ := readerKtxPort.ReadString('\n')
 		ip := v4ToHex(strings.TrimRight(ktxIP, "\n"))
 		port := portToHex(strings.TrimRight(ktxPort, "\n"))
 		fmt.Printf("\nGenerating pointer for %s:%s\n", strings.TrimRight(ktxIP, "\n"), ktxPort)
-		fmt.Println("Your pointer is: ")
-		fmt.Printf("Hex:\t6b747828%s%s29", ip, port)
-		fmt.Println("\nAscii:\tktx(" + strings.TrimRight(ktxIP, "\n") + ":" + strings.TrimRight(ktxPort, "\n") + ")")
+		fmt.Printf("\nYour pointer is: ")
+		fmt.Printf("\nHex:\t6b747828%s%s29", ip, port)
+		fmt.Printf("\nAscii:\tktx(" + strings.TrimRight(ktxIP, "\n") + ":" + strings.TrimRight(ktxPort, "\n") + ")")
 	}
 }
