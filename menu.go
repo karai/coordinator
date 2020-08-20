@@ -133,8 +133,6 @@ func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 			menuExit()
 			// } else if strings.Compare("\n", text) == 0 {
 			// fmt.Printf(brightred + "Unknown Input\n" + nc)
-		} else {
-			fmt.Printf(brightred + "Unknown Input\n" + nc)
 		}
 	}
 }
