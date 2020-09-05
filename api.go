@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"strconv"
@@ -53,6 +54,11 @@ func restAPI(keyCollection *ED25519Keys, graph *Graph) {
 		returnPeerID(w, r, keyCollection.publicKey)
 	}).Methods(http.MethodGet)
 
+	// Stats
+	api.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
+		returnStats(w, r, keyCollection, graph)
+	}).Methods(http.MethodGet)
+
 	// Transactions
 	api.HandleFunc("/transactions", func(w http.ResponseWriter, r *http.Request) {
 		returnTransactions(w, r, graph)
@@ -77,4 +83,28 @@ func restAPI(keyCollection *ED25519Keys, graph *Graph) {
 
 	// Serve via HTTP
 	http.ListenAndServe(":"+strconv.Itoa(karaiAPIPort), handlers.CORS(headersCORS, originsCORS, methodsCORS)(api))
+}
+
+// StatsDetail is an object containing strings relevant to the status of a coordinator node.
+type StatsDetail struct {
+	ChannelName        string `json: "stats_channel_name"`
+	ChannelDescription string `json: "stats_channel_description"`
+	Version            string `json: "stats_karai_version"`
+	ChannelContact     string `json: "stats_channel_contact"`
+	PubKeyString       string `json: "stats_pubkey"`
+	TxObjectsOnDisk    string `json: "stats_tx_on_disk"`
+	TxObjectsInMemory  string `json: "stats_tx_in_memory"`
+}
+
+func returnStats(w http.ResponseWriter, r *http.Request, keys *ED25519Keys, graph *Graph) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	reportRequest("Stats", w, r)
+	version := semverInfo()
+	pkstring := keys.publicKey
+	txObjectsOnDisk := countFilesOnDisk(graphDir)
+	txObjectsInMemory := countFilesInMemory(graph)
+	infoStruct := &StatsDetail{channelName, channelDescription, version, channelContact, pkstring, txObjectsOnDisk, txObjectsInMemory}
+	infoJSON, _ := json.Marshal(infoStruct)
+	w.Write([]byte(infoJSON))
 }
