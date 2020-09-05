@@ -17,7 +17,7 @@ type Graph struct {
 
 // GraphTx This is the structure of the transaction
 type GraphTx struct {
-	Type int    `json:"tx_type"`
+	Type string `json:"tx_type"`
 	Hash string `json:"tx_hash"`
 	Data string `json:"tx_data"`
 	Prev string `json:"tx_prev"`
@@ -36,12 +36,11 @@ func printTx(file string) string {
 func (graphTx *GraphTx) hashTx() {
 	data := strings.Join([]string{graphTx.Data, graphTx.Prev}, "")
 	hash := sha512.Sum512([]byte(data))
-	// fmt.Printf(brightgreen+"\n%x\n"+white, hash)
 	graphTx.Hash = fmt.Sprintf("%x", hash[:])
 }
 
 // addTx This will add a transaction to the graph
-func (graph *Graph) addTx(txType int, data string) {
+func (graph *Graph) addTx(txType, data string) {
 	if isCoordinator {
 		theTxBeforeThisOne := len(graph.Transactions) - 1
 		prevTx := graph.Transactions[theTxBeforeThisOne]
@@ -65,8 +64,9 @@ func (graph *Graph) addTx(txType int, data string) {
 }
 
 // txConstructor This will construct a tx
-func txConstructor(txType int, data, prevHash string) *GraphTx {
-	transaction := &GraphTx{txType, "", data, prevHash}
+func txConstructor(txType, data, prevHash string) *GraphTx {
+	dataByteString := fmt.Sprintf("%x", data)
+	transaction := &GraphTx{txType, "", dataByteString, prevHash}
 	transaction.hashTx()
 	return transaction
 }
@@ -75,7 +75,7 @@ func txConstructor(txType int, data, prevHash string) *GraphTx {
 func rootTx() *GraphTx {
 	var data = fmt.Sprintf("[%s] Hello Karai", unixTimeStampNano())
 	rootName := graphDir + "/0.json"
-	thisRoot := txConstructor(0, data, "")
+	thisRoot := txConstructor("0", data, "")
 	if !fileExists(rootName) {
 		createFile(rootName)
 	}
@@ -83,7 +83,6 @@ func rootTx() *GraphTx {
 		thisRootJSON, _ := json.Marshal(thisRoot)
 		writeFile(rootName, string(thisRootJSON))
 	}
-
 	return thisRoot
 }
 
