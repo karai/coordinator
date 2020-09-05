@@ -209,6 +209,15 @@ func zValidJSON(stringToValidate string) bool {
 	return json.Valid([]byte(stringToValidate))
 }
 
+func countFilesOnDisk(directory string) string {
+	files, _ := ioutil.ReadDir(directory)
+	return strconv.Itoa(len(files))
+}
+
+func countFilesInMemory(graph *Graph) string {
+	return strconv.Itoa(len(graph.Transactions))
+}
+
 func cleanData() {
 	if wantsClean {
 		// cleanse the whitelist

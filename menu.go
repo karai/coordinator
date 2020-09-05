@@ -59,7 +59,7 @@ func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 		} else if strings.Compare("a", text) == 0 {
 			if isCoordinator {
 				start := time.Now()
-				txint := 5
+				txint := 50
 				addTransactions(txint, graph)
 				elapsed := time.Since(start)
 				fmt.Printf("\nWriting %v objects to memory took %s seconds.\n", txint, elapsed)

@@ -8,13 +8,6 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type clientHeader struct {
-	ClientHeaderAppName    string `json:"client_header_app_name"`
-	ClientHeaderAppVersion string `json:"client_header_app_version"`
-	ClientHeaderPeerID     string `json:"client_header_peer_id"`
-	ClientProtocolVersion  string `json:"client_protocol_version"`
-}
-
 func joinChannel(ktx, pubKey, signedKey, ktxCertFileName string, keyCollection *ED25519Keys) *websocket.Conn {
 	if isCoordinator {
 		fmt.Printf(brightred + "\nThis is for nodes running in client mode only.")

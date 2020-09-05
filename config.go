@@ -29,6 +29,13 @@ const (
 	p2pConfigFile     = "peer.id"
 )
 
+// Channel values
+const (
+	channelName        string = "⏣ Karai"
+	channelDescription string = "This is a general purpose channel."
+	channelContact     string = "rock@karai.io"
+)
+
 // Coordinator values
 var (
 	nodePubKeySignature []byte
@@ -62,13 +69,6 @@ var (
 	trimmedPubKey string
 	isFNG         = true
 	isTrusted     = false
-)
-
-// Client Header
-var (
-	clientHeaderAppName    string = appName
-	clientHeaderAppVersion string = semverInfo()
-	clientHeaderPeerID     string
 )
 
 // Matrix Values
