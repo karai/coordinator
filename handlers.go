@@ -113,7 +113,7 @@ func addTransactions(number int, graph *Graph) {
 	for i := 1; i < number; i++ {
 		sum += i
 		msg := string(unixTimeStampNano())
-		graph.addTx(2, msg)
+		graph.addTx("2", msg)
 	}
 }
 
@@ -122,7 +122,7 @@ func txParser(msg []byte, graph *Graph) bool {
 	data := string(trimMsg)
 	if validJSON(data) {
 		fmt.Printf("\nSubmitting transaction: %s", data)
-		graph.addTx(2, string(data))
+		graph.addTx("2", string(data))
 		return true
 	}
 	fmt.Printf("\nJSON Error: %s", string(msg))

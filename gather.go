@@ -34,7 +34,7 @@ func getDataCovid19(seconds time.Duration, graph *Graph) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	handle("Error: ", err)
-	graph.addTx(2, string(body))
+	graph.addTx("2", string(body))
 	delay(seconds)
 	go getDataCovid19(seconds, graph)
 }
@@ -53,7 +53,7 @@ func getDataBitcoin(seconds time.Duration, graph *Graph) {
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	handle("Error: ", err)
-	graph.addTx(2, string(body))
+	graph.addTx("2", string(body))
 	delay(seconds)
 	go getDataBitcoin(seconds, graph)
 }
@@ -74,7 +74,7 @@ func getDataOgre(seconds time.Duration, graph *Graph) {
 	handle("Error: ", err)
 	// i think i should json parse here to remove the slashes
 	// but there is no json.Parse in go i dont think
-	graph.addTx(2, string(body))
+	graph.addTx("2", string(body))
 	delay(seconds)
 	go getDataOgre(seconds, graph)
 }
