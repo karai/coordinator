@@ -46,28 +46,40 @@ To place graph objects in a different directory:
 
 ```
   -apiport int
-    	Port to run Karai Coordinator API on. (default 4200)
+        Port to run Karai Coordinator API on. (default 4200)
+  -batchDir string
+        Path where batched transactions should be saved (default "./graph/batch")
+  -chunkSize int
+        Number of transactions per batch on disk. (default 100)
   -clean
-    	Clear all peer certs and graph objects
+        Clear all peer certs and graph objects
+  -consume
+        Consume data from sources.
   -coordinator
-    	Run as coordinator.
+        Run as coordinator.
+  -graphDir string
+        Path where graph objects should be saved (default "./graph")
   -matrix
-    	Enable Matrix functions. Requires -matrixToken, -matrixURL, and -matrixRoomID
+        Enable Matrix functions. Requires -matrixToken, -matrixURL, and -matrixRoomID
   -matrixRoomID string
-    	Room ID for matrix publishd events
+        Room ID for matrix publishd events
   -matrixToken string
-    	Matrix homeserver token
+        Matrix homeserver token
   -matrixURL string
-    	Matrix homeserver URL
+        Matrix homeserver URL
   -write
-    	Write each graph object to disk. (default true)
+        Write each graph object to disk. (default true)
+
 ```
 
 > Type `menu` to view a list of functions. Functions that are darkened are disabled.
 
 ## Dependencies
 
--   Golang 1.13+ [[Download]](https://golang.org)
+-   Golang 1.14+ https://golang.org
+-   Docker https://www.docker.com/
+-   Make http://www.gnu.org/software/make/
+-   Migrate https://github.com/golang-migrate/migrate
 
 ## Operating System
 
@@ -80,9 +92,11 @@ git clone https://github.com/karai/go-karai
 
 cd go-karai
 
-go mod init github.com/karai/go-karai
+make postgres
 
-go build && ./go-karai
+make migrate-up
+
+go build && ./go-karai --coordinator
 ```
 
 **Optional:** Compile with all errors displayed, then run binary. Avoids "too many errors" from hiding error info.
@@ -92,8 +106,9 @@ go build && ./go-karai
 ## Contributing
 
 -   MIT License
--   `gofmt` is used on all files.
--   go modules are used to manage dependencies.
+-   `gofmt`
+-   go modules
+-   stdlib > \*
 
 ## Thanks to:
 
