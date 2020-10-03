@@ -31,14 +31,17 @@ const (
 
 // Channel values
 const (
-	channelName        string = "⏣ Karai"
-	channelDescription string = "This is a general purpose channel."
-	channelContact     string = "rock@karai.io"
+	channelName string = "⏣ Karai"
+	channelDesc string = "This is a general purpose channel."
+	channelCont string = "rock@karai.io"
 )
 
 // Coordinator values
 var (
 	nodePubKeySignature []byte
+	dbUser              string = "postgres"
+	dbName              string = "karai"
+	dbSSL               string = "disable"
 	joinMsg             []byte = []byte("JOIN")
 	ncasMsg             []byte = []byte("NCAS")
 	capkMsg             []byte = []byte("CAPK")
@@ -48,16 +51,17 @@ var (
 	nsigMsg             []byte = []byte("NSIG")
 	sendMsg             []byte = []byte("send")
 	rtrnMsg             []byte = []byte("RTRN")
-	consumeData         bool   = false
-	isCoordinator       bool   = false
-	wantsClean          bool   = false
-	graphDir            string = ""
-	batchDir            string = ""
-	showIP              bool   = false
-	chunkSize           int
-	karaiAPIPort        int
-	p2pPeerID           string
-	upgrader            = websocket.Upgrader{
+	numTx               int
+	consumeData         bool = false
+	// isCoordinator       bool   = false
+	wantsClean   bool   = false
+	graphDir     string = ""
+	batchDir     string = ""
+	showIP       bool   = false
+	chunkSize    int
+	karaiAPIPort int
+	p2pPeerID    string
+	upgrader     = websocket.Upgrader{
 		EnableCompression: true,
 		ReadBufferSize:    1024,
 		WriteBufferSize:   1024,
@@ -78,4 +82,14 @@ var (
 	matrixToken  string = ""
 	matrixURL    string = ""
 	matrixRoomID string = ""
+)
+
+// Subgraph values
+var (
+	thisSubgraph          string = ""
+	thisSubgraphShortName string = ""
+	// poolSubLeader         string = ""
+	arrangePool  bool = false
+	poolInterval int  = 10 // seconds
+	txCount      int  = 0
 )

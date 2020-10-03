@@ -18,13 +18,24 @@ func ascii() {
 	fmt.Printf(green + "|  |/  / /  /\\  \\ |  |)  ) /  /\\  \\ |  |\n")
 	fmt.Printf(brightgreen + "|__|\\__\\/__/¯¯\\__\\|__|\\__\\/__/¯¯\\__\\|__| \n")
 	fmt.Printf(brightred + "v" + semverInfo() + white)
-	if isCoordinator {
-		fmt.Printf(brightred + " coordinator")
-	}
-	if !isCoordinator {
-		fmt.Printf(brightgreen + " client")
-	}
+	// if isCoordinator {
+	fmt.Printf(brightred + " coordinator")
+	// }
+	// if !isCoordinator {
+	// 	fmt.Printf(brightgreen + " client")
+	// }
 
+}
+
+// StatsDetail is an object containing strings relevant to the status of a coordinator node.
+type StatsDetail struct {
+	ChannelName        string `json:"channel_name"`
+	ChannelDescription string `json:"channel_description"`
+	Version            string `json:"version"`
+	ChannelContact     string `json:"channel_contact"`
+	PubKeyString       string `json:"pub_key_string"`
+	TxObjectsOnDisk    int    `json:"tx_objects_on_disk"`
+	GraphUsers         int    `json:"tx_graph_users"`
 }
 
 func delay(seconds time.Duration) {
@@ -97,7 +108,7 @@ func createDirIfItDontExist(dir string) {
 	}
 }
 
-// initLocations Check if p2p directory exists
+// checkDirs Check if directory exists
 func checkDirs() {
 	createDirIfItDontExist(graphDir)
 	createDirIfItDontExist(batchDir)
@@ -214,8 +225,15 @@ func countFilesOnDisk(directory string) string {
 	return strconv.Itoa(len(files))
 }
 
-func countFilesInMemory(graph *Graph) string {
-	return strconv.Itoa(len(graph.Transactions))
+func countWhitelistPeers() int {
+	directory := p2pWhitelistDir + "/"
+	dirRead, _ := os.Open(directory)
+	dirFiles, _ := dirRead.Readdir(0)
+	count := 0
+	for range dirFiles {
+		count++
+	}
+	return count
 }
 
 func cleanData() {

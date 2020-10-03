@@ -15,4 +15,4 @@ COPY        --from=builder              \
 
 EXPOSE      4200
 
-ENTRYPOINT  ["./go-karai","--coordinator"]
+ENTRYPOINT  ["./go-karai"]

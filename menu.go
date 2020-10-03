@@ -19,18 +19,18 @@ type v1Tx struct {
 // a few words that correspond to functions in the app. When
 // a command isn't understood, it displays the help menu and
 // returns to listening to input.
-func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
+func inputHandler(keyCollection *ED25519Keys) {
 	reader := bufio.NewReader(os.Stdin)
 	var conn *websocket.Conn
 
 	fmt.Printf("\n\n%v%v%v\n", white+"Type '", brightgreen+"menu", white+"' to view a list of commands")
 	for {
-		if isCoordinator {
-			fmt.Print(brightred + "#> ")
-		}
-		if !isCoordinator {
-			fmt.Print(brightgreen + "$> ")
-		}
+		// if isCoordinator {
+		fmt.Print(brightred + "#> " + nc)
+		// }
+		// if !isCoordinator {
+		// 	fmt.Print(brightgreen + "$> " + nc)
+		// }
 		text, _ := reader.ReadString('\n')
 		text = strings.TrimSpace(text)
 		if strings.Compare("help", text) == 0 {
@@ -46,30 +46,19 @@ func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 			menuVersion()
 		} else if strings.Compare("license", text) == 0 {
 			printLicense()
-		} else if strings.Compare("create-wallet", text) == 0 {
-			menuCreateWallet()
-		} else if strings.Compare("open-wallet", text) == 0 {
-			menuOpenWallet()
-		} else if strings.Compare("write-graph", text) == 0 {
-			writeGraph(graph)
-		} else if strings.Compare("batch", text) == 0 {
-			writeTransactions(graph)
 		} else if strings.Compare("upgrade", text) == 0 {
 			returnMessage(conn, keyCollection.publicKey)
 		} else if strings.Compare("a", text) == 0 {
-			if isCoordinator {
-				start := time.Now()
-				txint := 50
-				addTransactions(txint, graph)
-				elapsed := time.Since(start)
-				fmt.Printf("\nWriting %v objects to memory took %s seconds.\n", txint, elapsed)
-			} else {
-				fmt.Printf("It looks like you're not a channel coordinator. \nRun Karai with '-coordinator' option to run this command.\n")
-			}
-		} else if strings.Compare("transaction-history", text) == 0 {
-			menuGetContainerTransactions()
-		} else if strings.Compare("open-wallet-info", text) == 0 {
-			menuOpenWalletInfo()
+			// if isCoordinator {
+			start := time.Now()
+			txint := 50
+			addBulkTransactions(txint)
+
+			elapsed := time.Since(start)
+			fmt.Printf("\nWriting %v objects to memory took %s seconds.\n", txint, elapsed)
+			// } else {
+			// 	fmt.Printf("It looks like you're not a channel coordinator. \nRun Karai with '-coordinator' option to run this command.\n")
+			// }
 		} else if strings.HasPrefix(text, "connect") {
 			ktxAddressString := strings.TrimPrefix(text, "connect ")
 			if strings.Contains(ktxAddressString, ":") {
@@ -86,25 +75,6 @@ func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 			}
 			if !strings.Contains(ktxAddressString, ":") {
 				fmt.Printf("\nDid you forget to include the port?\n")
-			}
-		} else if strings.HasPrefix(text, "send") {
-			if isFNG {
-				if isTrusted {
-					sendBody := strings.TrimPrefix(text, "send ")
-					result := strings.Split(sendBody, " ")
-					if validJSON(result[1]) {
-						conn = requestSocket(result[0], "1")
-						stateYourBusiness(conn, keyCollection.publicKey)
-						// readFileBytes()
-						sendV1Transaction(result[1], conn)
-					} else {
-						fmt.Printf("That JSON doesnt look too good. ")
-					}
-				} else {
-					fmt.Printf("\nReconnect to the channel to use your certificate.")
-				}
-			} else {
-				fmt.Printf("\nWe have not connected to a channel yet.")
 			}
 		} else if strings.HasPrefix(text, "ban ") {
 			bannedPeer := strings.TrimPrefix(text, "ban ")
@@ -124,15 +94,13 @@ func inputHandler(keyCollection *ED25519Keys, graph *Graph) {
 			menuExit()
 		} else if strings.Compare("create-channel", text) == 0 {
 			fmt.Printf(brightcyan + "Creating channel...\n" + white)
-			spawnChannel()
+			// spawnChannel()
 		} else if strings.Compare("generate-pointer", text) == 0 {
 			generatePointer()
 		} else if strings.Compare("quit", text) == 0 {
 			menuExit()
 		} else if strings.Compare("close", text) == 0 {
 			menuExit()
-			// } else if strings.Compare("\n", text) == 0 {
-			// fmt.Printf(brightred + "Unknown Input\n" + nc)
 		}
 	}
 }

@@ -7,9 +7,9 @@ func main() {
 	checkDirs()
 	cleanData()
 	keys := initKeys()
-	graph := initAPI(keys)
+	createRoot()
+	go restAPI(keys)
 	ascii()
-	go consume(graph)
-	inputHandler(keys, graph)
-
+	go generateRandomTransactions()
+	inputHandler(keys)
 }

@@ -8,29 +8,19 @@
 
 > Note: Karai aims to always compile and run on **Linux** targetting the **AMD64** CPU architecture. Other operating systems and architectures may compile and run this software but should do so expecting some inconsistencies.
 
-**Launch Karai**
-
-As coordinator:
+**Launch Karai Coordinator**
 
 ```
-./go-karai -coordinator
+make postgres
+
+make migrate
+
+make karai
 ```
 
-As client:
+Deprecated> For optimal transaction speed as coordinator:
 
-```
-./go-karai
-```
-
-For quickly purging transactions and certs while developing:
-
-```
-./go-karai -clean
-```
-
-For optimal transaction speed as coordinator:
-
-> When skipping the write process, you are taking some risk if Karai crashes before you write transactions to disk. You can write your transactions to disk with the `wt` command.
+> Deprecated> When skipping the write process, you are taking some risk if Karai crashes before you write transactions to disk. You can write your transactions to disk with the `wt` command.
 
 ```
 ./go-karai -coordinator -write=false
@@ -45,6 +35,7 @@ To place graph objects in a different directory:
 **Launch Options**
 
 ```
+ Usage of ./go-karai:
   -apiport int
         Port to run Karai Coordinator API on. (default 4200)
   -batchDir string
@@ -55,8 +46,6 @@ To place graph objects in a different directory:
         Clear all peer certs and graph objects
   -consume
         Consume data from sources.
-  -coordinator
-        Run as coordinator.
   -graphDir string
         Path where graph objects should be saved (default "./graph")
   -matrix
@@ -69,7 +58,6 @@ To place graph objects in a different directory:
         Matrix homeserver URL
   -write
         Write each graph object to disk. (default true)
-
 ```
 
 > Type `menu` to view a list of functions. Functions that are darkened are disabled.
@@ -85,25 +73,13 @@ To place graph objects in a different directory:
 
 Karai supports Linux on AMD64 architecture, but may compile in other settings. Differences between Linux and non-Linux installs should be expected.
 
-## Building
-
-```bash
-git clone https://github.com/karai/go-karai
-
-cd go-karai
-
-make postgres
-
-make migrate-up
-
-go build && ./go-karai --coordinator
-```
-
 **Optional:** Compile with all errors displayed, then run binary. Avoids "too many errors" from hiding error info.
 
 `go build -gcflags="-e" && ./go-karai`
 
 ## Contributing
+
+This repo only receives stable version release updates, development happens in a private repo. Please make an issue before writing code for a PR.
 
 -   MIT License
 -   `gofmt`

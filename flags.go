@@ -13,7 +13,7 @@ func flags() {
 	flag.IntVar(&chunkSize, "chunkSize", 100, "Number of transactions per batch on disk.")
 	flag.IntVar(&karaiAPIPort, "apiport", 4200, "Port to run Karai Coordinator API on.")
 	flag.BoolVar(&consumeData, "consume", false, "Consume data from sources.")
-	flag.BoolVar(&isCoordinator, "coordinator", false, "Run as coordinator.")
+	// flag.BoolVar(&isCoordinator, "coordinator", false, "Run as coordinator.")
 	flag.BoolVar(&wantsClean, "clean", false, "Clear all peer certs and graph objects")
 	flag.BoolVar(&wantsFiles, "write", true, "Write each graph object to disk.")
 	flag.BoolVar(&wantsMatrix, "matrix", false, "Enable Matrix functions. Requires -matrixToken, -matrixURL, and -matrixRoomID")
