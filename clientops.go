@@ -9,17 +9,17 @@ import (
 )
 
 func joinChannel(ktx, pubKey, signedKey, ktxCertFileName string, keyCollection *ED25519Keys) *websocket.Conn {
-	if isCoordinator {
-		fmt.Printf(brightred + "\nThis is for nodes running in client mode only.")
-		return nil
-	}
+	// if isCoordinator {
+	// 	fmt.Printf(brightred + "\nThis is for nodes running in client mode only.")
+	// 	return nil
+	// }
 	fmt.Printf(brightcyan+"\nConnecting:"+white+" %s", ktx)
 
 	// request a websocket connection
 	var conn = requestSocket(ktx, "1")
 
 	// using that connection, attempt to join the channel
-	var joinedChannel = stateYourBusiness(conn, pubKey[:64])
+	var joinedChannel = joinStatement(conn, pubKey[:64])
 
 	// parse channel messages
 	socketMsgParser(ktx, pubKey, signedKey, joinedChannel, keyCollection)
@@ -28,7 +28,7 @@ func joinChannel(ktx, pubKey, signedKey, ktxCertFileName string, keyCollection *
 	return conn
 }
 
-func stateYourBusiness(conn *websocket.Conn, pubKey string) *websocket.Conn {
+func joinStatement(conn *websocket.Conn, pubKey string) *websocket.Conn {
 
 	// new users should send JOIN with the pubkey
 	if isFNG {
@@ -92,6 +92,8 @@ func socketMsgParser(ktx, pubKey, signedKey string, conn *websocket.Conn, keyCol
 	}
 }
 
+// Send Takes a data string and a websocket connection
 func sendV1Transaction(msg string, conn *websocket.Conn) {
-	_ = conn.WriteMessage(1, []byte(msg))
+	err := conn.WriteMessage(1, []byte(msg))
+	handle("There was a problem sending your transaction ", err)
 }
