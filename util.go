@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"regexp"
@@ -18,12 +17,7 @@ func ascii() {
 	fmt.Printf(green + "|  |/  / /  /\\  \\ |  |)  ) /  /\\  \\ |  |\n")
 	fmt.Printf(brightgreen + "|__|\\__\\/__/¯¯\\__\\|__|\\__\\/__/¯¯\\__\\|__| \n")
 	fmt.Printf(brightred + "v" + semverInfo() + white)
-	// if isCoordinator {
 	fmt.Printf(brightred + " coordinator")
-	// }
-	// if !isCoordinator {
-	// 	fmt.Printf(brightgreen + " client")
-	// }
 
 }
 
@@ -87,11 +81,6 @@ func unixTimeStampNano() string {
 	return timestamp
 }
 
-// Split helps me split up the args after a command
-func Split(r rune) bool {
-	return r == ':' || r == '.'
-}
-
 func writeTxToDisk(gtxType, gtxHash, gtxData, gtxPrev string) {
 	timeNano := unixTimeStampNano()
 	txFileName := timeNano + ".json"
@@ -110,8 +99,6 @@ func createDirIfItDontExist(dir string) {
 
 // checkDirs Check if directory exists
 func checkDirs() {
-	createDirIfItDontExist(graphDir)
-	createDirIfItDontExist(batchDir)
 	createDirIfItDontExist(configDir)
 	createDirIfItDontExist(p2pConfigDir)
 	createDirIfItDontExist(p2pWhitelistDir)
@@ -160,39 +147,14 @@ func writeFileBytes(filename string, bytesToWrite []byte) {
 
 // readFile Generic file handler
 func readFile(filename string) string {
-	var file, err = os.OpenFile(filename, os.O_RDWR, 0644)
-	handle("", err)
-	defer file.Close()
-	var text = make([]byte, 1024)
-	for {
-		_, err = file.Read(text)
-		if err == io.EOF {
-			break
-		}
-		if err != nil && err != io.EOF {
-			handle("", err)
-			break
-		}
-	}
+	text, err := ioutil.ReadFile(filename)
+	handle("Couldnt read the file: ", err)
 	return string(text)
 }
 
 func readFileBytes(filename string) []byte {
-	var file, err = os.OpenFile(filename, os.O_RDWR, 0644)
-	handle("", err)
-	defer file.Close()
-	var text = make([]byte, 1024)
-	for {
-		_, err = file.Read(text)
-		if err == io.EOF {
-			break
-		}
-		if err != nil && err != io.EOF {
-			handle("", err)
-			break
-		}
-	}
-	// fmt.Printf(string(text))
+	text, err := ioutil.ReadFile(filename)
+	handle("Couldnt read the file: ", err)
 	return text
 }
 
@@ -203,26 +165,7 @@ func deleteFile(filename string) {
 }
 
 func validJSON(stringToValidate string) bool {
-	// var jsonString json.RawMessage
-	// return json.Unmarshal([]byte(stringToValidate), &jsonString) == nil
 	return json.Valid([]byte(stringToValidate))
-}
-
-func zValidJSON(stringToValidate string) bool {
-	// var jsonData map[string]string
-	// err := json.Unmarshal([]byte(stringToValidate), &jsonData)
-	// if err == nil {
-	// 	fmt.Printf("\nJSON is valid")
-	// 	return true
-	// }
-	// fmt.Printf("\nJSON is NOT valid: %s", stringToValidate)
-	// return false
-	return json.Valid([]byte(stringToValidate))
-}
-
-func countFilesOnDisk(directory string) string {
-	files, _ := ioutil.ReadDir(directory)
-	return strconv.Itoa(len(files))
 }
 
 func countWhitelistPeers() int {
@@ -267,22 +210,5 @@ func cleanData() {
 		}
 		fmt.Printf(brightyellow+"\nCerts clear: %s"+white, brightgreen+"✔️")
 
-		// cleanse the batches
-		batchObjects, _ := ioutil.ReadDir(batchDir + "/")
-		for _, f := range batchObjects {
-			fileToDelete := batchDir + "/" + f.Name()
-			fmt.Printf("\nDeleting file: %s", fileToDelete)
-			deleteFile(fileToDelete)
-		}
-		fmt.Printf(brightyellow+"\nBatches clear: %s"+white, brightgreen+"✔️")
-
-		// cleanse the graph
-		graphObjects, _ := ioutil.ReadDir(graphDir + "/")
-		for _, f := range graphObjects {
-			fileToDelete := graphDir + "/" + f.Name()
-			fmt.Printf("\nDeleting file: %s", fileToDelete)
-			deleteFile(fileToDelete)
-		}
-		fmt.Printf(brightyellow+"\nGraph clear: %s"+white, brightgreen+"✔️")
 	}
 }

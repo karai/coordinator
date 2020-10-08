@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 	"strconv"
 
@@ -48,21 +47,10 @@ func restAPI(keyCollection *ED25519Keys) {
 	// Version
 	api.HandleFunc("/version", returnVersion).Methods(http.MethodGet)
 
-	// Peer
-	api.HandleFunc("/peer", func(w http.ResponseWriter, r *http.Request) {
-		returnPeerID(w, r, keyCollection.publicKey)
-	}).Methods(http.MethodGet)
-
 	// Stats
 	api.HandleFunc("/stats", func(w http.ResponseWriter, r *http.Request) {
 		returnStatsWeb(w, r, keyCollection)
 	}).Methods(http.MethodGet)
-
-	// REMOVED: https://discord.com/channels/388915017187328002/453726546868305962/761045558336421918
-	// // Transactions
-	// api.HandleFunc("/transactions", func(w http.ResponseWriter, r *http.Request) {
-	// 	returnTransactions(w, r)
-	// }).Methods(http.MethodGet)
 
 	// Transaction by ID
 	api.HandleFunc("/transaction/{hash}", func(w http.ResponseWriter, r *http.Request) {
@@ -71,7 +59,7 @@ func restAPI(keyCollection *ED25519Keys) {
 		returnSingleTransaction(w, r, hash)
 	}).Methods(http.MethodGet)
 
-	// Transaction by ID
+	// Transaction by qty
 	api.HandleFunc("/transactions/{number}", func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		number := vars["number"]
@@ -83,7 +71,7 @@ func restAPI(keyCollection *ED25519Keys) {
 		upgrader.CheckOrigin = func(r *http.Request) bool { return true }
 		conn, _ := upgrader.Upgrade(w, r, nil)
 		defer conn.Close()
-		fmt.Printf(brightgreen+"\n[%s] [%s] Peer socket opened!\n"+white, timeStamp(), conn.RemoteAddr())
+		// fmt.Printf(brightgreen+"\n[%s] [%s] Peer socket opened!"+white, timeStamp(), conn.RemoteAddr())
 		socketAuthAgent(conn, keyCollection)
 	})
 
