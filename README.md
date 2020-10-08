@@ -1,4 +1,4 @@
-![karaicoordinator](https://user-images.githubusercontent.com/34389545/95029433-d7ffce80-066d-11eb-82fc-a344d3a286bd.png)
+![karaicoordinator](https://user-images.githubusercontent.com/34389545/95401277-6f655b80-08d2-11eb-896c-5c3614ff20d7.png)
 
 [![Discord](https://img.shields.io/discord/388915017187328002?label=Join%20Discord)](http://chat.turtlecoin.lol) [![GitHub issues](https://img.shields.io/github/issues/karai/go-karai?label=Issues)](https://github.com/karai/go-karai/issues) ![GitHub stars](https://img.shields.io/github/stars/karai/go-karai?label=Github%20Stars) ![Build](https://github.com/karai/go-karai/workflows/Build/badge.svg) ![GitHub](https://img.shields.io/github/license/karai/go-karai) ![GitHub issues by-label](https://img.shields.io/github/issues/karai/go-karai/Todo) [![Go Report Card](https://goreportcard.com/badge/github.com/karai/go-karai)](https://goreportcard.com/report/github.com/karai/go-karai)
 
