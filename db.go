@@ -33,62 +33,11 @@ type Transaction struct {
 	Lead bool   `json:"lead" db:"tx_lead"`
 }
 
-// MilestoneData is a struct that defines the contents of the data field to be parsed
-type MilestoneData struct {
-	TxInterval int
-}
-
-// SubGraph defines participants and child transactions of a subgraph
-type SubGraph struct {
-	PubKeys  []string
-	Children []string
-}
-
 // connect will create an active DB connection
 func connect() (*sqlx.DB, error) {
 	connectParams := fmt.Sprintf("user=%s dbname=%s sslmode=%s", dbUser, dbName, dbSSL)
 	db, err := sqlx.Connect("postgres", connectParams)
 	return db, err
-}
-
-// verifyGraph will check each transaction in the graph
-func verifyGraph() (bool, error) {
-	return true, nil
-}
-
-// loadGraphArray outputs the entire graph as an array of Transactions
-func loadGraphArray() []byte {
-	db, connectErr := connect()
-	defer db.Close()
-	handle("Error creating a DB connection: ", connectErr)
-
-	graph := []Transaction{}
-	err := db.Select(&graph, "SELECT * FROM transactions")
-	graphJSON, _ := json.MarshalIndent(&graph, "", "  ")
-	switch {
-	case err != nil:
-		handle("There was a problem loading the graph: ", err)
-		return graphJSON
-	default:
-		return graphJSON
-	}
-}
-
-// loadGraphElementsArray outputs the entire graph as an array of Transactions
-func loadGraphElementsArray(number string) []byte {
-	db, connectErr := connect()
-	defer db.Close()
-	handle("Error creating a DB connection: ", connectErr)
-	graph := []Transaction{}
-	err := db.Select(&graph, "SELECT * FROM transactions ORDER BY tx_time DESC LIMIT $1", number)
-	graphJSON, _ := json.MarshalIndent(&graph, "", "  ")
-	switch {
-	case err != nil:
-		handle("There was a problem loading the graph: ", err)
-		return graphJSON[0:0]
-	default:
-		return graphJSON
-	}
 }
 
 // addBulkTransactions adds $number of tx to the graph immediately
@@ -137,15 +86,6 @@ func generateRandomTransactions() {
 	generateRandomTransactions()
 }
 
-func createBenchmark(number int) {
-	// start := time.Now()
-
-	addBulkTransactions(10)
-	// t := time.Now()
-	// elapsed := t.Sub(start)
-	// fmt.Printf(brightcyan+"\nBenchmark\nFinished %v operations in %s\n"+nc, number, elapsed)
-}
-
 // createRoot Transaction channels start with a rootTx transaction always
 func createRoot() error {
 	db, connectErr := connect()
@@ -184,7 +124,7 @@ func createRoot() error {
 }
 
 // createTransaction This will add a transaction to the graph
-func createTransaction(txType, data string) {
+func createTransaction(txType, data string) bool {
 	var txData string
 	var txSubg string
 	var txPrev string
@@ -226,10 +166,12 @@ func createTransaction(txType, data string) {
 			txSubg = thisSubgraph
 			thisSubgraphShortName = thisSubgraph[0:4]
 		}
+
 		tx.MustExec("INSERT INTO transactions (tx_time, tx_type, tx_hash, tx_data, tx_prev, tx_epoc, tx_subg, tx_prnt, tx_mile, tx_lead ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)", txTime, txType, txHash, txData, txPrev, txEpoc, txSubg, txPrnt, txMile, txLead)
 		tx.Commit()
 		txCount++
 	}
+	return true
 }
 
 // newSubGraphTimer timer for collection interval

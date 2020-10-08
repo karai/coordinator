@@ -9,25 +9,6 @@ import (
 	"strings"
 )
 
-// func p2pTCPDialer(ip, port, message string, pubKey string) {
-// 	var dialer net.Dialer
-// 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-// 	defer cancel()
-// 	connection, _ := dialer.DialContext(ctx, "tcp", ip+":"+port)
-// 	connection.Close()
-// }
-
-// func p2pListener() {
-// 	listen, err := net.Listen("tcp", ":"+strconv.Itoa(karaiP2PPort))
-// 	handle("Something went wrong creating a listener: ", err)
-// 	defer listen.Close()
-// 	for {
-// 		listenerConnection, err := listen.Accept()
-// 		handle("Something went wrong accepting a connection: ", err)
-// 		go handleConnection(listenerConnection)
-// 	}
-// }
-
 func banPeer(peerPubKey string) {
 	fmt.Printf("\nBanning peer: %s" + peerPubKey[:8] + "...")
 	whitelist := p2pWhitelistDir + "/" + peerPubKey + ".cert"

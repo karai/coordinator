@@ -25,8 +25,6 @@ const (
 	privKeyFilePath   = certPathSelfDir + "/" + "priv.key"
 	signedKeyFilePath = certPathSelfDir + "/" + "signed.key"
 	selfCertFilePath  = certPathSelfDir + "/" + "self.cert"
-	currentJSON       = "./config/milestone.json"
-	p2pConfigFile     = "peer.id"
 )
 
 // Channel values
@@ -38,41 +36,26 @@ const (
 
 // Coordinator values
 var (
-	nodePubKeySignature []byte
-	dbUser              string = "postgres"
-	dbName              string = "karai"
-	dbSSL               string = "disable"
-	joinMsg             []byte = []byte("JOIN")
-	ncasMsg             []byte = []byte("NCAS")
-	capkMsg             []byte = []byte("CAPK")
-	certMsg             []byte = []byte("CERT")
-	peerMsg             []byte = []byte("PEER")
-	pubkMsg             []byte = []byte("PUBK")
-	nsigMsg             []byte = []byte("NSIG")
-	sendMsg             []byte = []byte("send")
-	rtrnMsg             []byte = []byte("RTRN")
-	numTx               int
-	consumeData         bool = false
-	// isCoordinator       bool   = false
-	wantsClean   bool   = false
-	graphDir     string = ""
-	batchDir     string = ""
-	showIP       bool   = false
-	chunkSize    int
+	dbUser       string = "postgres"
+	dbName       string = "karai"
+	dbSSL        string = "disable"
+	joinMsg      []byte = []byte("JOIN")
+	ncasMsg      []byte = []byte("NCAS")
+	capkMsg      []byte = []byte("CAPK")
+	certMsg      []byte = []byte("CERT")
+	peerMsg      []byte = []byte("PEER")
+	pubkMsg      []byte = []byte("PUBK")
+	nsigMsg      []byte = []byte("NSIG")
+	sendMsg      []byte = []byte("SEND")
+	rtrnMsg      []byte = []byte("RTRN")
+	numTx        int
+	wantsClean   bool = false
 	karaiAPIPort int
-	p2pPeerID    string
 	upgrader     = websocket.Upgrader{
 		EnableCompression: true,
 		ReadBufferSize:    1024,
 		WriteBufferSize:   1024,
 	}
-)
-
-// Client Values
-var (
-	trimmedPubKey string
-	isFNG         = true
-	isTrusted     = false
 )
 
 // Matrix Values
@@ -88,8 +71,6 @@ var (
 var (
 	thisSubgraph          string = ""
 	thisSubgraphShortName string = ""
-	// poolSubLeader         string = ""
-	arrangePool  bool = false
-	poolInterval int  = 10 // seconds
-	txCount      int  = 0
+	poolInterval          int    = 10 // seconds
+	txCount               int    = 0
 )

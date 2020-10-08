@@ -31,9 +31,6 @@ func portToHex(port string) string {
 
 // generatePointer create the TRTL <=> Karai pointer
 func generatePointer() {
-	// if !isCoordinator {
-	// 	fmt.Printf("\nIt looks like you're not a channel coordinator. \n Run Karai with '-coordinator' option to run this command.")
-	// } else {
 	readerKtxIP := bufio.NewReader(os.Stdin)
 	fmt.Printf("\nEnter Karai Coordinator IP: ")
 	ktxIP, _ := readerKtxIP.ReadString('\n')
@@ -47,5 +44,3 @@ func generatePointer() {
 	fmt.Printf("\nHex:\t6b747828%s%s29", ip, port)
 	fmt.Printf("\nAscii:\tktx(" + strings.TrimRight(ktxIP, "\n") + ":" + strings.TrimRight(ktxPort, "\n") + ")")
 }
-
-// }

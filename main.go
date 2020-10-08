@@ -10,6 +10,8 @@ func main() {
 	createRoot()
 	go restAPI(keys)
 	ascii()
+	go getDataCovid19(1000)
+	go getDataOgre(500)
 	go generateRandomTransactions()
 	inputHandler(keys)
 }

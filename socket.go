@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha512"
 	"encoding/hex"
 	"fmt"
 	"regexp"
@@ -17,7 +16,7 @@ func socketAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys) {
 		msgType, msg, err := conn.ReadMessage()
 		if err != nil {
 			fmt.Printf(brightyellow+"\n[%s] [%s] Peer disconnected\n"+white, timeStamp(), conn.RemoteAddr())
-			break
+			return
 		}
 		if bytes.HasPrefix(msg, joinMsg) {
 			msgToString := string(msg)
@@ -39,7 +38,7 @@ func socketAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys) {
 				return
 			}
 			if !fileExists(whitelistPeerCertFile) {
-				fmt.Printf("\nCreating cert: %s", trimmedPubKey[:64])
+				fmt.Printf("\nCreating cert: %s.cert", trimmedPubKey[:64])
 				capkMsgString := string(capkMsg) + " " + keyCollection.publicKey
 				_ = conn.WriteMessage(msgType, []byte(capkMsgString))
 				_, receiveNCAS, _ := conn.ReadMessage()
@@ -56,7 +55,8 @@ func socketAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys) {
 						createFile(whitelistPeerCertFile)
 						writeFile(whitelistPeerCertFile, certBody[:192])
 						fmt.Printf("\nCert Name: %s", whitelistPeerCertFile)
-						fmt.Printf("\nCert Body: %s", certBody[:192])
+						fmt.Printf("\nCert Body: %s\n", certBody[:192])
+						sessionAgent(conn, trimmedPubKey)
 					}
 					if !verifySignedKey(keyCollection.publicKey[:64], trimmedPubKey[:64], nCASig) {
 						fmt.Printf("\nSignature does not verify!")
@@ -72,28 +72,20 @@ func socketAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys) {
 			} else {
 				var wbPeerMsg = "WCBK " + trimmedPubKey[:8]
 				conn.WriteMessage(1, []byte(wbPeerMsg))
-				trustedSessionParser(conn, keyCollection)
+				sessionAgent(conn, trimmedPubKey)
 			}
 
 		}
 		if bytes.HasPrefix(msg, rtrnMsg) {
 			fmt.Printf("\nreturn message: %s", string(msg))
 
-			// strip away the `RTRN` command prefix
 			input := strings.TrimLeft(string(msg), "RTRN ")
-			trimmedInput := strings.TrimSuffix(input, "\n")
-			// fmt.Printf("\ntrimmedInput: %s", trimmedInput)
-			var cert = strings.Split(trimmedInput, " ")
+			var cert = strings.Split(input, " ")
 
-			trimmer := strings.TrimSuffix(cert[1], "\n")
-			trimmedBytes := []byte(trimmer)
-
-			var hashOfTrimmer = sha512.Sum512(trimmedBytes)
-			var encodedHashOfTrimmer = hex.EncodeToString(hashOfTrimmer[:])
-			if !verifySignature(encodedHashOfTrimmer, keyCollection.publicKey, cert[0]) {
+			if !verifySignature(cert[0], keyCollection.publicKey, cert[1]) {
 				fmt.Printf("\nsig doesnt verify")
 			}
-			if verifySignature(encodedHashOfTrimmer, keyCollection.publicKey, cert[0]) {
+			if verifySignature(cert[0], keyCollection.publicKey, cert[1]) {
 				fmt.Printf("\nsig verifies")
 			}
 		}
@@ -105,4 +97,56 @@ func socketAuthAgent(conn *websocket.Conn, keyCollection *ED25519Keys) {
 		}
 
 	}
+}
+
+func sessionAgent(conn *websocket.Conn, sessionPubKey string) {
+	fmt.Printf(brightgreen+"\n[%s] [%s] New socket session"+white, timeStamp(), conn.RemoteAddr())
+	for {
+		defer conn.Close()
+		_, msg, err := conn.ReadMessage()
+		if err != nil {
+			fmt.Printf(brightyellow+"\n[%s] [%s] socket: %s\n"+white, timeStamp(), conn.RemoteAddr(), err)
+			break
+		}
+		if txParser(msg) {
+			fmt.Printf(brightgreen+"\n[%s] [%s] Tx Good! \n"+white, timeStamp(), conn.RemoteAddr())
+			okbyte := []byte("OK " + sessionPubKey)
+			_ = conn.WriteMessage(1, okbyte)
+		} else if !txParser(msg) {
+			fmt.Printf("\nThis transaction has failed to parse:\n %s", msg)
+		}
+	}
+}
+
+func txParser(msg []byte) bool {
+	// SEND
+	if bytes.HasPrefix(msg, sendMsg) {
+
+		// Remove the SEND command
+		input := strings.TrimLeft(string(msg), "SEND ")
+
+		// Split the remaining texts
+		var sendString = strings.Split(input, " ")
+
+		// Use the sender pubkey to look for a matching cert
+		pubkey := sendString[0]
+		fileNamePubKey := pubkey[:64]
+		fileName := p2pWhitelistDir + "/" + fileNamePubKey + ".cert"
+		readCert := readFile(fileName)
+
+		// If the cert in our records matches the cert the sender gave us,
+		// the sender is verified.
+		certChecksOut := readCert == sendString[1]
+		if !certChecksOut {
+			fmt.Printf("\nTx signature does not verify.")
+			return false
+		}
+		if certChecksOut {
+			decodedBytes, _ := hex.DecodeString(sendString[2])
+			transactionBody := strings.TrimRight(string(decodedBytes), "\n")
+			fmt.Printf(brightgreen+"\nTX signature verified for pubkey %s\n%s", brightcyan+pubkey[:4]+"..."+pubkey[60:64]+nc, brightwhite+transactionBody+nc)
+			createTransaction("2", transactionBody)
+		}
+	}
+	return true
 }
